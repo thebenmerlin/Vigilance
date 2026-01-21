@@ -1,0 +1,72 @@
+# =============================================================================
+# VIGILANCE DASHBOARD - Docker Compose
+# =============================================================================
+# Orchestrates frontend and backend services
+#
+# Usage:
+#   Development: docker-compose up
+#   Production:  docker-compose -f docker-compose.yml up -d
+#   Build:       docker-compose up --build
+#
+# Services:
+#   - frontend: React app served via nginx (port 3000)
+#   - backend:  Express API server (port 3001)
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Backend API Server
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vigilance-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - CORS_ORIGIN=http://localhost:3000
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - vigilance-network
+
+  # ---------------------------------------------------------------------------
+  # Frontend (React + Nginx)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vigilance-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - vigilance-network
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  vigilance-network:
+    driver: bridge
+
+# =============================================================================
+# Volumes (for future database integration)
+# =============================================================================
+# volumes:
+#   postgres-data:
+#   redis-data:

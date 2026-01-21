@@ -1,0 +1,42 @@
+{
+    "compilerOptions": {
+        /* =========================================================================
+     * VIGILANCE BACKEND - TypeScript Configuration
+     * =========================================================================
+     * Configuration for Node.js/Express backend with TypeScript.
+     * ========================================================================= */
+        // Target Node.js LTS
+        "target": "ES2022",
+        "lib": [
+            "ES2022"
+        ],
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        // Output directory
+        "outDir": "./dist",
+        "rootDir": "./src",
+        // Strict type checking
+        "strict": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        // Module handling
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        // Source maps for debugging
+        "sourceMap": true,
+        "declaration": true,
+        // Skip type checking of node_modules
+        "skipLibCheck": true,
+        // Emit decorator metadata (for future DI use)
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}

@@ -1,0 +1,52 @@
+{
+    "compilerOptions": {
+        /* =========================================================================
+     * VIGILANCE DASHBOARD - TypeScript Configuration
+     * =========================================================================
+     * This configures TypeScript for the React/Vite frontend.
+     * 
+     * Key settings:
+     * - Strict mode enabled for type safety
+     * - Path aliases matching vite.config.ts
+     * - JSX support for React
+     * ========================================================================= */
+        // Target modern JavaScript (ES2020+)
+        "target": "ES2020",
+        "lib": [
+            "ES2020",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        // React JSX configuration
+        "jsx": "react-jsx",
+        // Strict type checking - catches more bugs at compile time
+        "strict": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        // Path aliases - must match vite.config.ts
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "./src/*"
+            ]
+        },
+        // Allow importing JSON files
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "esModuleInterop": true,
+        // Don't emit JS files - Vite handles compilation
+        "noEmit": true,
+        // Skip type checking of node_modules for faster builds
+        "skipLibCheck": true
+    },
+    "include": [
+        "src"
+    ],
+    "references": [
+        {
+            "path": "./tsconfig.node.json"
+        }
+    ]
+}
