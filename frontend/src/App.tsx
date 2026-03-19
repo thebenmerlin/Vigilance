@@ -27,6 +27,7 @@ import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
+import VanguardAI from './components/VanguardAI';
 import './styles/globals.css';
 
 /**
@@ -48,6 +49,11 @@ function App(): React.JSX.Element {
    * Used for sidebar navigation highlighting
    */
   const [activePage, setActivePage] = useState('dashboard');
+
+  /**
+   * Toggle state for Vanguard AI Copilot
+   */
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
 
   // ---------------------------------------------------------------------------
   // HANDLERS
@@ -75,13 +81,14 @@ function App(): React.JSX.Element {
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
+    <div className="min-h-screen bg-slate-900 text-white relative">
       {/* 
         Top Navigation Bar
         Contains: Logo, breadcrumbs, system status, user info
       */}
       <Navbar
         onMenuClick={toggleSidebar}
+        onToggleCopilot={() => setIsCopilotOpen(prev => !prev)}
       />
 
       {/* Main Content Area with Sidebar */}
@@ -140,6 +147,12 @@ function App(): React.JSX.Element {
           )}
         </main>
       </div>
+
+      {/* Floating Vanguard AI Copilot */}
+      <VanguardAI
+        isOpen={isCopilotOpen}
+        onClose={() => setIsCopilotOpen(false)}
+      />
     </div>
   );
 }

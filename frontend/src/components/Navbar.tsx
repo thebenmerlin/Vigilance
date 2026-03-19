@@ -27,6 +27,7 @@ import {
   ChevronDown,
   LogOut,
   User,
+  TerminalSquare
 } from 'lucide-react';
 
 // =============================================================================
@@ -36,13 +37,15 @@ import {
 interface NavbarProps {
   /** Callback when hamburger menu is clicked */
   onMenuClick?: () => void;
+  /** Callback to toggle Vanguard AI Copilot */
+  onToggleCopilot?: () => void;
 }
 
 // =============================================================================
 // COMPONENT
 // =============================================================================
 
-const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
+const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onToggleCopilot }) => {
   // ---------------------------------------------------------------------------
   // STATE
   // ---------------------------------------------------------------------------
@@ -179,6 +182,16 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
 
           {/* Divider */}
           <div className="h-8 w-px bg-slate-700" />
+
+          {/* Vanguard AI Toggle */}
+          <button
+            onClick={onToggleCopilot}
+            className="flex items-center space-x-2 px-3 py-1.5 bg-indigo-900/50 hover:bg-indigo-800/50 border border-indigo-500/30 rounded-lg text-indigo-300 transition-colors group"
+            aria-label="Toggle AI Copilot"
+          >
+            <TerminalSquare className="w-4 h-4 group-hover:text-indigo-200" />
+            <span className="text-xs font-mono font-bold tracking-wider hidden md:block">VANGUARD_AI</span>
+          </button>
 
           {/* Notification Bell */}
           <button
