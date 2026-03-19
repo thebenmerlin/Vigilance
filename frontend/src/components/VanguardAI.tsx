@@ -103,10 +103,8 @@ const VanguardAI: React.FC<VanguardAIProps> = ({ isOpen, onClose }) => {
         }
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed bottom-6 right-6 w-96 max-w-[calc(100vw-3rem)] h-[500px] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl flex flex-col z-[9999] overflow-hidden">
+        <div className={`fixed bottom-6 right-6 w-96 max-w-[calc(100vw-3rem)] h-[500px] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl flex flex-col z-[9999] overflow-hidden transition-all duration-300 ${isOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
             {/* Header */}
             <div className="px-4 py-3 bg-slate-800 border-b border-slate-700 flex items-center justify-between cursor-default">
                 <div className="flex items-center space-x-2">
