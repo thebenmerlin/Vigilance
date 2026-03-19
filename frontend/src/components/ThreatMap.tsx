@@ -28,6 +28,9 @@ import {
     AlertTriangle,
     Eye,
     RefreshCw,
+    Clock,
+    Play,
+    Pause
 } from 'lucide-react';
 
 // =============================================================================
@@ -62,6 +65,7 @@ interface ThreatZone {
     radius: number; // meters
     level: 1 | 2 | 3 | 4 | 5;
     description: string;
+    trajectory?: [number, number][]; // Predicted path
 }
 
 // =============================================================================
@@ -86,7 +90,15 @@ const DEMO_SENSORS: Sensor[] = [
  * Demo threat zones
  */
 const DEMO_THREATS: ThreatZone[] = [
-    { id: 'threat-01', lat: 28.6120, lng: 77.2080, radius: 200, level: 4, description: 'Unidentified movement detected' },
+    {
+        id: 'threat-01', lat: 28.6120, lng: 77.2080, radius: 200, level: 4, description: 'Unidentified movement detected',
+        trajectory: [
+            [28.6120, 77.2080],
+            [28.6130, 77.2095],
+            [28.6145, 77.2110],
+            [28.6155, 77.2120]
+        ]
+    },
     { id: 'threat-02', lat: 28.6200, lng: 77.1980, radius: 300, level: 2, description: 'Suspicious activity - monitoring' },
 ];
 
@@ -108,6 +120,34 @@ const ThreatMap: React.FC<ThreatMapProps> = ({
     const mapInstanceRef = useRef<L.Map | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedSensor, setSelectedSensor] = useState<Sensor | null>(null);
+
+    // Chronos state
+    const [timeScrub, setTimeScrub] = useState(50); // 0 = past, 50 = now, 100 = future
+    const [isPlaying, setIsPlaying] = useState(false);
+
+    // Layer refs for dynamic updates
+    const trajectoryLayersRef = useRef<L.LayerGroup | null>(null);
+    const swarmLayersRef = useRef<L.LayerGroup | null>(null);
+
+    // ---------------------------------------------------------------------------
+    // EFFECTS
+    // ---------------------------------------------------------------------------
+
+    useEffect(() => {
+        let interval: any;
+        if (isPlaying) {
+            interval = setInterval(() => {
+                setTimeScrub(prev => {
+                    if (prev >= 100) {
+                        setIsPlaying(false);
+                        return 100;
+                    }
+                    return prev + 1;
+                });
+            }, 100);
+        }
+        return () => clearInterval(interval);
+    }, [isPlaying]);
 
     // ---------------------------------------------------------------------------
     // HELPERS
@@ -188,6 +228,10 @@ const ThreatMap: React.FC<ThreatMapProps> = ({
         // Store reference
         mapInstanceRef.current = map;
 
+        // Initialize dynamic layers
+        trajectoryLayersRef.current = L.layerGroup().addTo(map);
+        swarmLayersRef.current = L.layerGroup().addTo(map);
+
         // Add sensors as markers
         DEMO_SENSORS.forEach((sensor) => {
             const marker = L.marker([sensor.lat, sensor.lng], {
@@ -253,6 +297,80 @@ const ThreatMap: React.FC<ThreatMapProps> = ({
     }, [center, zoom]);
 
     // ---------------------------------------------------------------------------
+    // CHRONOS & SWARM EFFECTS
+    // ---------------------------------------------------------------------------
+
+    useEffect(() => {
+        if (!mapInstanceRef.current || !trajectoryLayersRef.current || !swarmLayersRef.current) return;
+
+        trajectoryLayersRef.current.clearLayers();
+        swarmLayersRef.current.clearLayers();
+
+        // Only show future predictions and swarm logic if scrubbing forward (>50)
+        if (timeScrub > 50) {
+            const progress = (timeScrub - 50) / 50; // 0 to 1
+
+            DEMO_THREATS.forEach(threat => {
+                if (threat.trajectory && threat.level >= 3) {
+                    // Draw dashed predicted path
+                    L.polyline(threat.trajectory, {
+                        color: getThreatColor(threat.level),
+                        dashArray: '5, 10',
+                        weight: 2,
+                        opacity: 0.6
+                    }).addTo(trajectoryLayersRef.current!);
+
+                    // Calculate current predicted position
+                    const pathIndex = Math.min(
+                        Math.floor(progress * threat.trajectory.length),
+                        threat.trajectory.length - 1
+                    );
+                    const currentPos = threat.trajectory[pathIndex];
+
+                    // Draw glowing marker at predicted position
+                    L.circleMarker(currentPos, {
+                        radius: 5,
+                        color: '#fff',
+                        fillColor: getThreatColor(threat.level),
+                        fillOpacity: 1,
+                        weight: 1
+                    }).addTo(trajectoryLayersRef.current!);
+
+                    // Swarm Auto-Tasking: find drones and draw intercept paths
+                    if (threat.level >= 4) {
+                        const drones = DEMO_SENSORS.filter(s => s.type === 'drone' && s.status === 'operational');
+                        drones.forEach(drone => {
+                            // Calculate a curved intercept path
+                            const latDiff = currentPos[0] - drone.lat;
+                            const lngDiff = currentPos[1] - drone.lng;
+
+                            // Simple bezier-like curve points
+                            const midPoint: [number, number] = [
+                                drone.lat + latDiff * 0.5 + (Math.random() * 0.005 - 0.0025),
+                                drone.lng + lngDiff * 0.5 + (Math.random() * 0.005 - 0.0025)
+                            ];
+
+                            const dronePath = [
+                                [drone.lat, drone.lng],
+                                midPoint,
+                                currentPos
+                            ];
+
+                            // Draw drone intercept path
+                            L.polyline(dronePath as [number, number][], {
+                                color: '#3B82F6', // Blue for friendly drone
+                                dashArray: '4, 8',
+                                weight: 1.5,
+                                opacity: Math.max(0.2, progress)
+                            }).addTo(swarmLayersRef.current!);
+                        });
+                    }
+                }
+            });
+        }
+    }, [timeScrub]);
+
+    // ---------------------------------------------------------------------------
     // RENDER
     // ---------------------------------------------------------------------------
 
@@ -290,7 +408,7 @@ const ThreatMap: React.FC<ThreatMapProps> = ({
             </div>
 
             {/* Map Container */}
-            <div className={`relative ${height}`}>
+            <div className={`relative ${height} flex flex-col`}>
                 {/* Loading Overlay */}
                 {isLoading && (
                     <div className="absolute inset-0 bg-slate-900 z-10 flex items-center justify-center">
@@ -301,8 +419,40 @@ const ThreatMap: React.FC<ThreatMapProps> = ({
                     </div>
                 )}
 
-                {/* Leaflet Map */}
-                <div ref={mapRef} className="w-full h-full" />
+                {/* Leaflet Map Container */}
+                <div className="relative flex-grow">
+                    <div ref={mapRef} className="absolute inset-0 z-0" />
+                </div>
+
+                {/* Chronos Interface (Time Slider) */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-3/4 max-w-md bg-slate-900/90 backdrop-blur border border-slate-700 rounded-full px-4 py-2 flex items-center space-x-3 z-[1000] shadow-xl">
+                    <button
+                        onClick={() => setIsPlaying(!isPlaying)}
+                        className="text-indigo-400 hover:text-indigo-300 transition-colors"
+                    >
+                        {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                    </button>
+
+                    <div className="flex-1 flex flex-col items-center">
+                        <div className="flex justify-between w-full text-[10px] font-mono text-slate-400 mb-1 px-1">
+                            <span>-12h</span>
+                            <span className={timeScrub === 50 ? 'text-green-400 font-bold' : ''}>NOW</span>
+                            <span className="text-indigo-400">+12h (PREDICT)</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={timeScrub}
+                            onChange={(e) => {
+                                setTimeScrub(parseInt(e.target.value));
+                                setIsPlaying(false);
+                            }}
+                            className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                        />
+                    </div>
+                    <Clock className="w-4 h-4 text-slate-500" />
+                </div>
 
                 {/* Legend */}
                 <div className="absolute bottom-4 left-4 bg-slate-800/90 backdrop-blur rounded-lg p-3 text-xs z-[1000]">

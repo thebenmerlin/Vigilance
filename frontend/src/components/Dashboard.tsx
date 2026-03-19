@@ -39,6 +39,7 @@ import ThreatMap from './ThreatMap';
 import VideoFeed from './VideoFeed';
 import AlertsFeed from './AlertsFeed';
 import PredictionChart from './PredictionChart';
+import NexusGraph from './NexusGraph';
 
 // =============================================================================
 // TYPES
@@ -88,6 +89,9 @@ const Dashboard: React.FC = () => {
    * Current date/time for header
    */
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Toggle between Nexus Graph and Prediction Chart
+  const [showNexusGraph, setShowNexusGraph] = useState(false);
 
   // ---------------------------------------------------------------------------
   // EFFECTS
@@ -246,11 +250,31 @@ const Dashboard: React.FC = () => {
       {/* Main Content Grid - Row 2: Charts & Alerts */}
       {/* ===================================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Prediction Chart */}
-        <PredictionChart
-          height={280}
-          showLegend={true}
-        />
+        {/* Analytics Area (Toggleable) */}
+        <div className="flex flex-col space-y-2">
+            <div className="flex justify-end space-x-2">
+                <button
+                    onClick={() => setShowNexusGraph(false)}
+                    className={`px-3 py-1 text-xs font-medium rounded-t-lg transition-colors ${!showNexusGraph ? 'bg-slate-800 text-white border-t border-x border-slate-700' : 'bg-slate-900 text-slate-400 hover:text-slate-200'}`}
+                >
+                    Predictions
+                </button>
+                <button
+                    onClick={() => setShowNexusGraph(true)}
+                    className={`px-3 py-1 text-xs font-medium rounded-t-lg transition-colors ${showNexusGraph ? 'bg-slate-800 text-white border-t border-x border-slate-700' : 'bg-slate-900 text-slate-400 hover:text-slate-200'}`}
+                >
+                    Nexus Graph
+                </button>
+            </div>
+            {showNexusGraph ? (
+                <NexusGraph height={280} />
+            ) : (
+                <PredictionChart
+                    height={280}
+                    showLegend={true}
+                />
+            )}
+        </div>
 
         {/* Recent Alerts Feed */}
         <AlertsFeed

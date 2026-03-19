@@ -56,6 +56,7 @@ interface FeedSource {
     name: string;
     type: 'camera' | 'drone' | 'satellite';
     status: 'online' | 'offline';
+    spectralType?: 'optical' | 'thermal' | 'nightvision' | 'sar';
 }
 
 // =============================================================================
@@ -63,11 +64,11 @@ interface FeedSource {
 // =============================================================================
 
 const DEMO_SOURCES: FeedSource[] = [
-    { id: 'cam-01', name: 'Camera 01 - Gate North', type: 'camera', status: 'online' },
-    { id: 'cam-02', name: 'Camera 02 - Perimeter East', type: 'camera', status: 'online' },
-    { id: 'drone-01', name: 'Drone 01 - Patrol Alpha', type: 'drone', status: 'online' },
-    { id: 'drone-02', name: 'Drone 02 - Recon', type: 'drone', status: 'offline' },
-    { id: 'sat-01', name: 'Satellite - Sector Overview', type: 'satellite', status: 'online' },
+    { id: 'cam-01', name: 'Camera 01 - Gate North (Optical)', type: 'camera', status: 'online', spectralType: 'optical' },
+    { id: 'cam-02', name: 'Camera 02 - Perimeter East (Thermal)', type: 'camera', status: 'online', spectralType: 'thermal' },
+    { id: 'drone-01', name: 'Drone 01 - Patrol Alpha (Night Vision)', type: 'drone', status: 'online', spectralType: 'nightvision' },
+    { id: 'drone-02', name: 'Drone 02 - Recon', type: 'drone', status: 'offline', spectralType: 'optical' },
+    { id: 'sat-01', name: 'Satellite - Sector Overview (SAR)', type: 'satellite', status: 'online', spectralType: 'sar' },
 ];
 
 const DEMO_DETECTIONS: Detection[] = [
@@ -126,6 +127,40 @@ const VideoFeed: React.FC<VideoFeedProps> = ({
 
     const formatTimestamp = (): string => {
         return currentTime.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+    };
+
+    const getFeedBackgroundStyle = () => {
+        const baseStyle = {
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+            backgroundBlendMode: 'overlay',
+        };
+
+        switch (selectedSource.spectralType) {
+            case 'thermal':
+                return {
+                    ...baseStyle,
+                    background: `linear-gradient(135deg, #4c0000 0%, #000080 50%, #800000 100%), ${baseStyle.backgroundImage}`,
+                    filter: 'contrast(1.2) brightness(1.1)',
+                };
+            case 'nightvision':
+                return {
+                    ...baseStyle,
+                    background: `linear-gradient(135deg, #001a00 0%, #003300 50%, #001a00 100%), ${baseStyle.backgroundImage}`,
+                    filter: 'contrast(1.5) sepia(1) hue-rotate(80deg) saturate(3)',
+                };
+            case 'sar':
+                return {
+                    ...baseStyle,
+                    background: `linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%), ${baseStyle.backgroundImage}`,
+                    filter: 'contrast(2) grayscale(1)',
+                };
+            case 'optical':
+            default:
+                return {
+                    ...baseStyle,
+                    background: `linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%), ${baseStyle.backgroundImage}`,
+                };
+        }
     };
 
     // ---------------------------------------------------------------------------
@@ -203,17 +238,11 @@ const VideoFeed: React.FC<VideoFeedProps> = ({
             </div>
 
             {/* Video Feed Area */}
-            <div className={`relative ${height} bg-slate-900`}>
-                {/* Simulated Video Feed - Dark gradient background */}
+            <div className={`relative ${height} bg-slate-900 overflow-hidden`}>
+                {/* Simulated Video Feed - Dynamic background based on spectral type */}
                 <div
-                    className="absolute inset-0"
-                    style={{
-                        background: `
-              linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%),
-              url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")
-            `,
-                        backgroundBlendMode: 'overlay',
-                    }}
+                    className="absolute inset-0 transition-all duration-500"
+                    style={getFeedBackgroundStyle() as React.CSSProperties}
                 >
                     {/* Scan lines effect */}
                     <div
@@ -225,37 +254,57 @@ const VideoFeed: React.FC<VideoFeedProps> = ({
                 </div>
 
                 {/* Detection Boxes */}
-                {DEMO_DETECTIONS.map((detection) => (
-                    <div
-                        key={detection.id}
-                        className="absolute border-2 rounded"
-                        style={{
-                            left: `${detection.bbox.x}%`,
-                            top: `${detection.bbox.y}%`,
-                            width: `${detection.bbox.width}%`,
-                            height: `${detection.bbox.height}%`,
-                            borderColor: getThreatColor(detection.threatLevel),
-                            boxShadow: `0 0 10px ${getThreatColor(detection.threatLevel)}40`,
-                        }}
-                    >
-                        {/* Label */}
+                {DEMO_DETECTIONS.map((detection) => {
+                    const anomalyScore = Math.floor(Math.random() * 40) + 50 + (detection.threatLevel * 5);
+                    return (
                         <div
-                            className="absolute -top-6 left-0 px-2 py-0.5 rounded text-xs font-medium"
+                            key={detection.id}
+                            className="absolute border-2 rounded transition-all duration-300"
                             style={{
-                                backgroundColor: getThreatColor(detection.threatLevel),
-                                whiteSpace: 'nowrap',
+                                left: `${detection.bbox.x}%`,
+                                top: `${detection.bbox.y}%`,
+                                width: `${detection.bbox.width}%`,
+                                height: `${detection.bbox.height}%`,
+                                borderColor: getThreatColor(detection.threatLevel),
+                                boxShadow: `0 0 10px ${getThreatColor(detection.threatLevel)}40`,
                             }}
                         >
-                            {detection.label} ({detection.confidence}%)
-                        </div>
+                            {/* Label */}
+                            <div
+                                className="absolute -top-6 left-0 px-2 py-0.5 rounded text-xs font-medium flex items-center space-x-2"
+                                style={{
+                                    backgroundColor: getThreatColor(detection.threatLevel),
+                                    whiteSpace: 'nowrap',
+                                }}
+                            >
+                                <span>{detection.label}</span>
+                                <span className="opacity-80">|</span>
+                                <span>{detection.confidence}%</span>
+                            </div>
 
-                        {/* Corner markers */}
-                        <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 rounded-tl" style={{ borderColor: getThreatColor(detection.threatLevel) }} />
-                        <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 rounded-tr" style={{ borderColor: getThreatColor(detection.threatLevel) }} />
-                        <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 rounded-bl" style={{ borderColor: getThreatColor(detection.threatLevel) }} />
-                        <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 rounded-br" style={{ borderColor: getThreatColor(detection.threatLevel) }} />
-                    </div>
-                ))}
+                            {/* Biometric/Anomaly Overlay Panel */}
+                            <div
+                                className="absolute top-0 -right-28 w-24 bg-black/60 backdrop-blur-sm border border-white/10 rounded p-1.5 text-[10px] text-white/90"
+                            >
+                                <div className="font-mono mb-1 text-indigo-300 border-b border-white/20 pb-0.5">BIO_METRICS</div>
+                                <div className="flex justify-between items-center mb-0.5">
+                                    <span className="opacity-70">Anomaly:</span>
+                                    <span className={`font-mono ${anomalyScore > 80 ? 'text-red-400' : 'text-green-400'}`}>{anomalyScore}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="opacity-70">Kinetic:</span>
+                                    <span className="font-mono">{Math.floor(Math.random() * 5)}m/s</span>
+                                </div>
+                            </div>
+
+                            {/* Corner markers */}
+                            <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 rounded-tl" style={{ borderColor: getThreatColor(detection.threatLevel) }} />
+                            <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 rounded-tr" style={{ borderColor: getThreatColor(detection.threatLevel) }} />
+                            <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 rounded-bl" style={{ borderColor: getThreatColor(detection.threatLevel) }} />
+                            <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 rounded-br" style={{ borderColor: getThreatColor(detection.threatLevel) }} />
+                        </div>
+                    );
+                })}
 
                 {/* Threat Classification Legend */}
                 <div className="absolute top-3 right-3 bg-slate-900/80 backdrop-blur rounded p-2 text-xs">
@@ -282,8 +331,10 @@ const VideoFeed: React.FC<VideoFeedProps> = ({
                 </div>
 
                 {/* Source Info */}
-                <div className="absolute bottom-3 right-3 bg-slate-900/80 backdrop-blur rounded px-3 py-1.5 text-xs text-slate-400">
-                    SRC: {selectedSource.id.toUpperCase()} | FPS: 30 | 1080p
+                <div className="absolute bottom-3 right-3 bg-slate-900/80 backdrop-blur rounded px-3 py-1.5 text-xs text-slate-400 flex items-center space-x-3">
+                    <span className="font-mono text-indigo-400 tracking-wider">[{selectedSource.spectralType?.toUpperCase() || 'OPTICAL'}]</span>
+                    <span>SRC: {selectedSource.id.toUpperCase()}</span>
+                    <span>FPS: 30</span>
                 </div>
 
                 {/* Crosshair Center */}
