@@ -89,11 +89,12 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onToggleCopilot }) => {
    * Format current time for display
    */
   const formatTime = (): string => {
-    return currentTime.toLocaleTimeString('en-US', {
+    return currentTime.toLocaleTimeString('en-IN', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
       hour12: false,
+      timeZone: 'Asia/Kolkata',
     });
   };
 
@@ -101,11 +102,12 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onToggleCopilot }) => {
    * Format current date for display
    */
   const formatDate = (): string => {
-    return currentTime.toLocaleDateString('en-US', {
+    return currentTime.toLocaleDateString('en-IN', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
       year: 'numeric',
+      timeZone: 'Asia/Kolkata',
     });
   };
 
@@ -114,7 +116,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onToggleCopilot }) => {
   // ---------------------------------------------------------------------------
 
   return (
-    <nav className="bg-slate-800 border-b border-slate-700 h-16 px-4 sticky top-0 z-50">
+    <nav className="bg-black border-b border-slate-700 h-16 px-4 sticky top-0 z-50">
       <div className="h-full flex items-center justify-between">
         {/* ------------------------------------------------------------------- */}
         {/* LEFT SECTION: Menu, Logo, Breadcrumb */}
@@ -173,7 +175,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onToggleCopilot }) => {
           {/* Date/Time Display */}
           <div className="hidden md:block text-right">
             <div className="text-white font-mono text-sm font-medium">
-              {formatTime()} UTC
+              {formatTime()} IST
             </div>
             <div className="text-slate-400 text-xs">
               {formatDate()}

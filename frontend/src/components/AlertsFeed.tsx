@@ -116,7 +116,7 @@ const formatTime = (timestamp: string): string => {
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
 
-    return date.toLocaleDateString();
+    return date.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
 };
 
 // =============================================================================
@@ -132,10 +132,7 @@ const AlertsFeed: React.FC<AlertsFeedProps> = ({
     // STATE & HOOKS
     // ---------------------------------------------------------------------------
 
-    const { alerts, loading, acknowledgeAlert, unacknowledgedCount } = useAlerts({
-        demoMode: true,
-        demoInterval: 20000, // New alert every 20 seconds
-    });
+    const { alerts, loading, acknowledgeAlert, unacknowledgedCount } = useAlerts();
 
     const [expandedId, setExpandedId] = useState<string | null>(null);
 

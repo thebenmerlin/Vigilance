@@ -103,7 +103,10 @@ const VideoFeed: React.FC<VideoFeedProps> = ({
     const [selectedSource, setSelectedSource] = useState(DEMO_SOURCES[0]);
     const [showSourceDropdown, setShowSourceDropdown] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isRecording, setIsRecording] = useState(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [detections, setDetections] = useState<any[]>([]);
 
     // ---------------------------------------------------------------------------
     // EFFECTS
@@ -113,6 +116,25 @@ const VideoFeed: React.FC<VideoFeedProps> = ({
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
+        // Simulate detection updates
+        const interval = setInterval(() => {
+            // Randomly add or remove detections based on demo data
+            const shuffled = [...DEMO_DETECTIONS].sort(() => 0.5 - Math.random());
+            const numToShow = Math.floor(Math.random() * 3) + 1; // 1 to 3 detections
+
+            const activeDetections = shuffled.slice(0, numToShow).map(d => ({
+                ...d,
+                anomalyScore: Math.floor(Math.random() * 40) + 50 + (d.threatLevel * 5),
+                kineticSpeed: Math.floor(Math.random() * 5)
+            }));
+
+            setDetections(activeDetections);
+        }, 3000);
+
+        return () => clearInterval(interval);
     }, []);
 
     // ---------------------------------------------------------------------------
@@ -126,7 +148,7 @@ const VideoFeed: React.FC<VideoFeedProps> = ({
     };
 
     const formatTimestamp = (): string => {
-        return currentTime.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+        return currentTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }).replace(',', '') + ' IST';
     };
 
     const getFeedBackgroundStyle = () => {
@@ -254,8 +276,8 @@ const VideoFeed: React.FC<VideoFeedProps> = ({
                 </div>
 
                 {/* Detection Boxes */}
-                {DEMO_DETECTIONS.map((detection) => {
-                    const anomalyScore = Math.floor(Math.random() * 40) + 50 + (detection.threatLevel * 5);
+                {detections.map((detection) => {
+                    const anomalyScore = detection.anomalyScore || 50;
                     return (
                         <div
                             key={detection.id}
@@ -293,7 +315,7 @@ const VideoFeed: React.FC<VideoFeedProps> = ({
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="opacity-70">Kinetic:</span>
-                                    <span className="font-mono">{Math.floor(Math.random() * 5)}m/s</span>
+                                    <span className="font-mono">{detection.kineticSpeed || 0}m/s</span>
                                 </div>
                             </div>
 
