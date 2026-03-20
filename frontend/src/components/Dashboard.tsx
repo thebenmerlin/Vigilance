@@ -24,13 +24,19 @@
  * =============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Responsive as ResponsiveGridLayout, Layout } from 'react-grid-layout';
+// @ts-ignore
+import { WidthProvider } from 'react-grid-layout/legacy';
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
 import {
   AlertTriangle,
   Users,
   Radar,
   Globe,
   Activity,
+  GripHorizontal,
 } from 'lucide-react';
 
 // Import dashboard components
@@ -40,6 +46,9 @@ import VideoFeed from './VideoFeed';
 import AlertsFeed from './AlertsFeed';
 import PredictionChart from './PredictionChart';
 import NexusGraph from './NexusGraph';
+
+// @ts-ignore
+const ResponsiveGridLayoutWithWidth = WidthProvider(ResponsiveGridLayout);
 
 // =============================================================================
 // TYPES
@@ -75,6 +84,26 @@ const INITIAL_STATS: DashboardStats = {
 // COMPONENT
 // =============================================================================
 
+/**
+ * Panel Wrapper Component
+ */
+const PanelWrapper = ({ children, title }: { children: React.ReactNode, title?: string }) => (
+  <div className="h-full flex flex-col bg-slate-900 border border-slate-800 rounded-lg overflow-hidden group">
+    {title && (
+      <div className="drag-handle cursor-move bg-slate-800 border-b border-slate-700 px-3 py-2 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity absolute top-0 left-0 right-0 z-10">
+        <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">{title}</span>
+        <GripHorizontal className="w-4 h-4 text-slate-500" />
+      </div>
+    )}
+    <div className={`flex-1 h-full overflow-hidden ${title ? 'pt-8' : ''} drag-handle cursor-move`}>
+        {/* Use another div for children so pointer events can interact with content. Dragging only works if there's no interference, so we keep the handle specific. For stats cards, the whole thing is draggable. For others, we only want the top bar to be draggable to allow interaction with map/video/etc. */}
+        <div className="h-full pointer-events-auto cursor-auto" onMouseDown={e => e.stopPropagation()}>
+           {children}
+        </div>
+    </div>
+  </div>
+);
+
 const Dashboard: React.FC = () => {
   // ---------------------------------------------------------------------------
   // STATE
@@ -84,6 +113,50 @@ const Dashboard: React.FC = () => {
    * Dashboard statistics (simulated updates)
    */
   const [stats, setStats] = useState<DashboardStats>(INITIAL_STATS);
+
+  /**
+   * Layout configuration for React Grid Layout
+   */
+  const defaultLayouts = useMemo(() => {
+    return {
+      lg: [
+        { i: 'stats-alerts', x: 0, y: 0, w: 3, h: 4, minW: 2, minH: 3, isResizable: false } as unknown as Layout,
+        { i: 'stats-personnel', x: 3, y: 0, w: 3, h: 4, minW: 2, minH: 3, isResizable: false } as unknown as Layout,
+        { i: 'stats-sensors', x: 6, y: 0, w: 3, h: 4, minW: 2, minH: 3, isResizable: false } as unknown as Layout,
+        { i: 'stats-global', x: 9, y: 0, w: 3, h: 4, minW: 2, minH: 3, isResizable: false } as unknown as Layout,
+        { i: 'map', x: 0, y: 4, w: 6, h: 14, minW: 4, minH: 8 } as unknown as Layout,
+        { i: 'video', x: 6, y: 4, w: 6, h: 14, minW: 4, minH: 8 } as unknown as Layout,
+        { i: 'charts', x: 0, y: 18, w: 6, h: 12, minW: 4, minH: 8 } as unknown as Layout,
+        { i: 'alerts', x: 6, y: 18, w: 6, h: 12, minW: 4, minH: 8 } as unknown as Layout
+      ],
+      md: [
+        { i: 'stats-alerts', x: 0, y: 0, w: 5, h: 4, isResizable: false } as unknown as Layout,
+        { i: 'stats-personnel', x: 5, y: 0, w: 5, h: 4, isResizable: false } as unknown as Layout,
+        { i: 'stats-sensors', x: 0, y: 4, w: 5, h: 4, isResizable: false } as unknown as Layout,
+        { i: 'stats-global', x: 5, y: 4, w: 5, h: 4, isResizable: false } as unknown as Layout,
+        { i: 'map', x: 0, y: 8, w: 10, h: 14 } as unknown as Layout,
+        { i: 'video', x: 0, y: 22, w: 10, h: 14 } as unknown as Layout,
+        { i: 'charts', x: 0, y: 36, w: 10, h: 12 } as unknown as Layout,
+        { i: 'alerts', x: 0, y: 48, w: 10, h: 12 } as unknown as Layout
+      ],
+      sm: [
+        { i: 'stats-alerts', x: 0, y: 0, w: 6, h: 4, isResizable: false } as unknown as Layout,
+        { i: 'stats-personnel', x: 0, y: 4, w: 6, h: 4, isResizable: false } as unknown as Layout,
+        { i: 'stats-sensors', x: 0, y: 8, w: 6, h: 4, isResizable: false } as unknown as Layout,
+        { i: 'stats-global', x: 0, y: 12, w: 6, h: 4, isResizable: false } as unknown as Layout,
+        { i: 'map', x: 0, y: 16, w: 6, h: 14 } as unknown as Layout,
+        { i: 'video', x: 0, y: 30, w: 6, h: 14 } as unknown as Layout,
+        { i: 'charts', x: 0, y: 44, w: 6, h: 12 } as unknown as Layout,
+        { i: 'alerts', x: 0, y: 56, w: 6, h: 12 } as unknown as Layout
+      ]
+    };
+  }, []);
+
+  const [layouts, setLayouts] = useState<Partial<Record<string, Layout>>>(defaultLayouts as unknown as Partial<Record<string, Layout>>);
+
+  const onLayoutChange = (layout: Layout, newLayouts: Partial<Record<string, Layout>>) => {
+    setLayouts(newLayouts);
+  };
 
   /**
    * Current date/time for header
@@ -187,100 +260,143 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* ===================================================================== */}
-      {/* Statistics Cards Row */}
+      {/* Draggable Dashboard Layout */}
       {/* ===================================================================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Active Alerts */}
-        <StatsCard
-          title="Active Alerts"
-          value={stats.activeAlerts}
-          status={stats.criticalAlerts > 0 ? 'critical' : stats.activeAlerts > 0 ? 'warning' : 'ok'}
-          icon={<AlertTriangle className="w-5 h-5" />}
-          description={`${stats.criticalAlerts} critical`}
-          change={stats.activeAlerts > INITIAL_STATS.activeAlerts ? 15 : -10}
-          changeType={stats.activeAlerts > INITIAL_STATS.activeAlerts ? 'increase' : 'decrease'}
-        />
+      <div className="min-h-[800px]">
+          <ResponsiveGridLayoutWithWidth
+              className="layout"
+              layouts={layouts}
+              breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+              cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+              rowHeight={30}
+              onLayoutChange={onLayoutChange}
+              // @ts-ignore
+              draggableHandle=".drag-handle"
+              margin={[16, 16]}
+          >
+              <div key="stats-alerts" className="cursor-move drag-handle relative group">
+                  <div className="absolute top-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <GripHorizontal className="w-4 h-4 text-slate-500" />
+                  </div>
+                  <div className="h-full pointer-events-auto" onMouseDown={e => e.stopPropagation()}>
+                      <StatsCard
+                          title="Active Alerts"
+                          value={stats.activeAlerts}
+                          status={stats.criticalAlerts > 0 ? 'critical' : stats.activeAlerts > 0 ? 'warning' : 'ok'}
+                          icon={<AlertTriangle className="w-5 h-5" />}
+                          description={`${stats.criticalAlerts} critical`}
+                          change={stats.activeAlerts > INITIAL_STATS.activeAlerts ? 15 : -10}
+                          changeType={stats.activeAlerts > INITIAL_STATS.activeAlerts ? 'increase' : 'decrease'}
+                      />
+                  </div>
+              </div>
 
-        {/* Personnel */}
-        <StatsCard
-          title="Personnel"
-          value={stats.personnel}
-          status="ok"
-          icon={<Users className="w-5 h-5" />}
-          description="On duty"
-        />
+              <div key="stats-personnel" className="cursor-move drag-handle relative group">
+                  <div className="absolute top-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <GripHorizontal className="w-4 h-4 text-slate-500" />
+                  </div>
+                  <div className="h-full pointer-events-auto" onMouseDown={e => e.stopPropagation()}>
+                      <StatsCard
+                          title="Personnel"
+                          value={stats.personnel}
+                          status="ok"
+                          icon={<Users className="w-5 h-5" />}
+                          description="On duty"
+                      />
+                  </div>
+              </div>
 
-        {/* Sensors Online */}
-        <StatsCard
-          title="Sensors Online"
-          value={`${sensorPercentage}%`}
-          status={sensorPercentage >= 90 ? 'ok' : sensorPercentage >= 70 ? 'warning' : 'critical'}
-          icon={<Radar className="w-5 h-5" />}
-          description={`${stats.sensorsOnline}/${stats.sensorsTotal} operational`}
-        />
+              <div key="stats-sensors" className="cursor-move drag-handle relative group">
+                  <div className="absolute top-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <GripHorizontal className="w-4 h-4 text-slate-500" />
+                  </div>
+                  <div className="h-full pointer-events-auto" onMouseDown={e => e.stopPropagation()}>
+                      <StatsCard
+                          title="Sensors Online"
+                          value={`${sensorPercentage}%`}
+                          status={sensorPercentage >= 90 ? 'ok' : sensorPercentage >= 70 ? 'warning' : 'critical'}
+                          icon={<Radar className="w-5 h-5" />}
+                          description={`${stats.sensorsOnline}/${stats.sensorsTotal} operational`}
+                      />
+                  </div>
+              </div>
 
-        {/* Global Operations */}
-        <StatsCard
-          title="Global Ops"
-          value={stats.globalOps}
-          status="neutral"
-          icon={<Globe className="w-5 h-5" />}
-          description="Active missions"
-        />
-      </div>
+              <div key="stats-global" className="cursor-move drag-handle relative group">
+                  <div className="absolute top-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <GripHorizontal className="w-4 h-4 text-slate-500" />
+                  </div>
+                  <div className="h-full pointer-events-auto" onMouseDown={e => e.stopPropagation()}>
+                      <StatsCard
+                          title="Global Ops"
+                          value={stats.globalOps}
+                          status="neutral"
+                          icon={<Globe className="w-5 h-5" />}
+                          description="Active missions"
+                      />
+                  </div>
+              </div>
 
-      {/* ===================================================================== */}
-      {/* Main Content Grid - Row 1: Map & Video */}
-      {/* ===================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Tactical Map */}
-        <ThreatMap
-          height="h-80"
-          showControls={true}
-        />
+              <div key="map">
+                  <PanelWrapper title="Tactical Map">
+                      <ThreatMap
+                          height="h-full"
+                          showControls={true}
+                      />
+                  </PanelWrapper>
+              </div>
 
-        {/* Live Video Feed */}
-        <VideoFeed
-          height="h-80"
-          showControls={true}
-        />
-      </div>
+              <div key="video">
+                  <PanelWrapper title="Live Video Feed">
+                      <VideoFeed
+                          height="h-full"
+                          showControls={true}
+                      />
+                  </PanelWrapper>
+              </div>
 
-      {/* ===================================================================== */}
-      {/* Main Content Grid - Row 2: Charts & Alerts */}
-      {/* ===================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Analytics Area (Toggleable) */}
-        <div className="flex flex-col space-y-2">
-            <div className="flex justify-end space-x-2">
-                <button
-                    onClick={() => setShowNexusGraph(false)}
-                    className={`px-3 py-1 text-xs font-medium rounded-t-lg transition-colors ${!showNexusGraph ? 'bg-slate-800 text-white border-t border-x border-slate-700' : 'bg-slate-900 text-slate-400 hover:text-slate-200'}`}
-                >
-                    Predictions
-                </button>
-                <button
-                    onClick={() => setShowNexusGraph(true)}
-                    className={`px-3 py-1 text-xs font-medium rounded-t-lg transition-colors ${showNexusGraph ? 'bg-slate-800 text-white border-t border-x border-slate-700' : 'bg-slate-900 text-slate-400 hover:text-slate-200'}`}
-                >
-                    Nexus Graph
-                </button>
-            </div>
-            {showNexusGraph ? (
-                <NexusGraph height={280} />
-            ) : (
-                <PredictionChart
-                    height={280}
-                    showLegend={true}
-                />
-            )}
-        </div>
+              <div key="charts">
+                  <PanelWrapper title="Analytics">
+                      <div className="flex flex-col h-full bg-slate-900 border border-slate-800 rounded-lg p-4">
+                          <div className="flex justify-between items-center mb-4">
+                              <h3 className="text-white font-semibold">Intelligence Hub</h3>
+                              <div className="flex space-x-2">
+                                  <button
+                                      onClick={(e) => { e.stopPropagation(); setShowNexusGraph(false); }}
+                                      className={`px-3 py-1 text-xs font-medium rounded transition-colors ${!showNexusGraph ? 'bg-slate-700 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700'}`}
+                                  >
+                                      Predictions
+                                  </button>
+                                  <button
+                                      onClick={(e) => { e.stopPropagation(); setShowNexusGraph(true); }}
+                                      className={`px-3 py-1 text-xs font-medium rounded transition-colors ${showNexusGraph ? 'bg-slate-700 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700'}`}
+                                  >
+                                      Nexus Graph
+                                  </button>
+                              </div>
+                          </div>
+                          <div className="flex-1 overflow-hidden">
+                              {showNexusGraph ? (
+                                  <div className="h-full relative overflow-hidden rounded border border-slate-800">
+                                       <NexusGraph height={250} />
+                                  </div>
+                              ) : (
+                                  <div className="h-full relative overflow-hidden">
+                                        <PredictionChart height={250} showLegend={true} />
+                                  </div>
+                              )}
+                          </div>
+                      </div>
+                  </PanelWrapper>
+              </div>
 
-        {/* Recent Alerts Feed */}
-        <AlertsFeed
-          maxItems={8}
-          showHeader={true}
-        />
+              <div key="alerts">
+                  <PanelWrapper title="Recent Alerts">
+                      <div className="h-full bg-slate-900 border border-slate-800 rounded-lg p-4 overflow-y-auto">
+                           <AlertsFeed maxItems={15} showHeader={false} />
+                      </div>
+                  </PanelWrapper>
+              </div>
+          </ResponsiveGridLayoutWithWidth>
       </div>
 
       {/* ===================================================================== */}
