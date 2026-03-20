@@ -37,6 +37,7 @@ export function useAlerts(options: UseAlertsOptions = {}): UseAlertsReturn {
 
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(true);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
