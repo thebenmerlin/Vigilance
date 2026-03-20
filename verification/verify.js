@@ -18,7 +18,11 @@ async function verifyFeature(page) {
         await page.mouse.move(800, 800, { steps: 10 }); // Move it to the bottom right
         await page.mouse.up();
     }
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> origin/main
     await page.waitForTimeout(1000); // Wait for animation
 
     // Take screenshot of new layout
@@ -32,7 +36,11 @@ async function run() {
         viewport: { width: 1280, height: 1024 }
     });
     const page = await context.newPage();
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> origin/main
     try {
         await verifyFeature(page);
     } finally {
