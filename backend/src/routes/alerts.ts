@@ -1,124 +1,179 @@
-/**
- * =============================================================================
- * VIGILANCE BACKEND - Alerts Route
- * =============================================================================
- * 
- * Endpoints for security alerts.
- * 
- * Endpoints:
- * - GET /api/alerts - List all alerts (with pagination)
- * - GET /api/alerts/:id - Get single alert
- * - PATCH /api/alerts/:id/acknowledge - Acknowledge an alert
- * 
- * TODO: Add database persistence
- * =============================================================================
- */
-
 import { Router, Request, Response } from 'express';
-import { MOCK_ALERTS, Alert } from '../data/mockData.js';
+import { pgPool } from '../data/db/index.js';
+import { Alert } from '../data/mockData.js'; // Keep for types
 
 const router = Router();
-
-// In-memory alert store (would be database in production)
-let alerts: Alert[] = [...MOCK_ALERTS];
 
 /**
  * GET /api/alerts
  * Returns paginated alerts list
  */
-router.get('/', (req: Request, res: Response) => {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
-    const priority = req.query.priority as string;
+router.get('/', async (req: Request, res: Response) => {
+    try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const priority = req.query.priority as string;
+        const startIndex = (page - 1) * limit;
 
-    // Filter by priority if provided
-    let filteredAlerts = priority
-        ? alerts.filter(a => a.priority === priority)
-        : alerts;
+        const client = await pgPool.connect();
+        try {
+            let countQuery = 'SELECT COUNT(*) FROM alerts';
+            let selectQuery = 'SELECT * FROM alerts ORDER BY timestamp DESC LIMIT $1 OFFSET $2';
+            let countParams: any[] = [];
+            let selectParams: any[] = [limit, startIndex];
 
-    // Sort by timestamp (newest first)
-    filteredAlerts = filteredAlerts.sort((a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
+            if (priority) {
+                countQuery += ' WHERE priority = $1';
+                selectQuery = 'SELECT * FROM alerts WHERE priority = $3 ORDER BY timestamp DESC LIMIT $1 OFFSET $2';
+                countParams = [priority];
+                selectParams = [limit, startIndex, priority];
+            }
 
-    // Pagination
-    const startIndex = (page - 1) * limit;
-    const paginatedAlerts = filteredAlerts.slice(startIndex, startIndex + limit);
+            const countResult = await client.query(countQuery, countParams);
+            const totalItems = parseInt(countResult.rows[0].count);
 
-    res.json({
-        success: true,
-        data: paginatedAlerts,
-        pagination: {
-            page,
-            pageSize: limit,
-            totalItems: filteredAlerts.length,
-            totalPages: Math.ceil(filteredAlerts.length / limit),
-        },
-        timestamp: new Date().toISOString(),
-    });
+            const selectResult = await client.query(selectQuery, selectParams);
+            const alerts = selectResult.rows.map(row => {
+                 const loc = typeof row.location === 'string' ? JSON.parse(row.location) : row.location;
+                 return {
+                     ...row,
+                     title: row.type, // map DB type to frontend title
+                     sector: loc?.sector || 'Unknown Sector', // map DB location to frontend sector
+                     location: loc
+                 };
+            });
+
+            res.json({
+                success: true,
+                data: alerts,
+                pagination: {
+                    page,
+                    pageSize: limit,
+                    totalItems,
+                    totalPages: Math.ceil(totalItems / limit),
+                },
+                timestamp: new Date().toISOString(),
+            });
+        } finally {
+            client.release();
+        }
+    } catch (err: any) {
+        res.status(500).json({ success: false, error: err.message });
+    }
 });
 
 /**
  * GET /api/alerts/:id
  * Returns a single alert by ID
  */
-router.get('/:id', (req: Request, res: Response) => {
-    const alert = alerts.find(a => a.id === req.params.id);
+router.get('/:id', async (req: Request, res: Response) => {
+    try {
+        const client = await pgPool.connect();
+        try {
+            const result = await client.query('SELECT * FROM alerts WHERE id = $1', [req.params.id]);
+            if (result.rows.length === 0) {
+                 res.status(404).json({
+                    success: false,
+                    error: 'Alert not found',
+                    timestamp: new Date().toISOString(),
+                });
+                return;
+            }
+            const row = result.rows[0];
+            const loc = typeof row.location === 'string' ? JSON.parse(row.location) : row.location;
+            const alert = {
+                ...row,
+                title: row.type,
+                sector: loc?.sector || 'Unknown Sector',
+                location: loc
+            };
 
-    if (!alert) {
-        res.status(404).json({
-            success: false,
-            error: 'Alert not found',
-            timestamp: new Date().toISOString(),
-        });
-        return;
+            res.json({
+                success: true,
+                data: alert,
+                timestamp: new Date().toISOString(),
+            });
+        } finally {
+            client.release();
+        }
+    } catch (err: any) {
+         res.status(500).json({ success: false, error: err.message });
     }
-
-    res.json({
-        success: true,
-        data: alert,
-        timestamp: new Date().toISOString(),
-    });
 });
 
 /**
  * PATCH /api/alerts/:id/acknowledge
  * Acknowledge an alert
  */
-router.patch('/:id/acknowledge', (req: Request, res: Response) => {
-    const alertIndex = alerts.findIndex(a => a.id === req.params.id);
+router.patch('/:id/acknowledge', async (req: Request, res: Response) => {
+    try {
+         const client = await pgPool.connect();
+         try {
+             const result = await client.query(
+                 'UPDATE alerts SET status = $1 WHERE id = $2 RETURNING *',
+                 ['acknowledged', req.params.id]
+             );
 
-    if (alertIndex === -1) {
-        res.status(404).json({
-            success: false,
-            error: 'Alert not found',
-            timestamp: new Date().toISOString(),
-        });
-        return;
+             if (result.rows.length === 0) {
+                 res.status(404).json({
+                     success: false,
+                     error: 'Alert not found',
+                     timestamp: new Date().toISOString(),
+                 });
+                 return;
+             }
+
+             const row = result.rows[0];
+             const loc = typeof row.location === 'string' ? JSON.parse(row.location) : row.location;
+             const alert = {
+                 ...row,
+                 title: row.type,
+                 sector: loc?.sector || 'Unknown Sector',
+                 location: loc
+             };
+
+             res.json({
+                 success: true,
+                 data: alert,
+                 message: 'Alert acknowledged successfully',
+                 timestamp: new Date().toISOString(),
+             });
+         } finally {
+             client.release();
+         }
+    } catch (err: any) {
+         res.status(500).json({ success: false, error: err.message });
     }
-
-    // Update alert status
-    alerts[alertIndex] = {
-        ...alerts[alertIndex],
-        status: 'acknowledged',
-    };
-
-    res.json({
-        success: true,
-        data: alerts[alertIndex],
-        message: 'Alert acknowledged successfully',
-        timestamp: new Date().toISOString(),
-    });
 });
 
 /**
  * Add a new alert (used by alert simulator)
+ * (Actually, we insert it to Postgres)
  */
-export function addAlert(alert: Alert): void {
-    alerts.unshift(alert);
-    // Keep only last 100 alerts in memory
-    if (alerts.length > 100) {
-        alerts = alerts.slice(0, 100);
+export async function addAlert(alert: Alert): Promise<void> {
+    try {
+        const client = await pgPool.connect();
+        try {
+            await client.query(
+                `INSERT INTO alerts (id, type, priority, message, source, timestamp, status, location)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                [alert.id, alert.title, alert.priority, alert.message, alert.source, alert.timestamp, alert.status, JSON.stringify({ sector: alert.sector })]
+            );
+
+            // Limit checks - keeping it small for demo (delete older than 100)
+            const countRes = await client.query('SELECT COUNT(*) FROM alerts');
+            if (parseInt(countRes.rows[0].count) > 100) {
+                 await client.query(`
+                     DELETE FROM alerts WHERE id IN (
+                        SELECT id FROM alerts ORDER BY timestamp ASC LIMIT 1
+                     )
+                 `);
+            }
+        } finally {
+            client.release();
+        }
+    } catch (err: any) {
+        console.error('[addAlert] Error inserting mock alert:', err.message);
     }
 }
 
