@@ -40,6 +40,7 @@ import alertsRouter from './routes/alerts.js';
 import sensorsRouter from './routes/sensors.js';
 import predictionsRouter from './routes/predictions.js';
 import statusRouter from './routes/status.js';
+import mlProxyRouter from './routes/mlProxy.js';
 
 // Import real-time event simulator
 import { startAlertSimulator } from './realtime/alertSimulator.js';
@@ -106,6 +107,7 @@ app.use('/api/alerts', alertsRouter);
 app.use('/api/sensors', sensorsRouter);
 app.use('/api/predictions', predictionsRouter);
 app.use('/api/status', statusRouter);
+app.use('/api/ml', mlProxyRouter);
 
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {

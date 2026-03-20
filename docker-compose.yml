@@ -31,12 +31,90 @@ services:
       - NODE_ENV=production
       - PORT=3001
       - CORS_ORIGIN=http://localhost:3000
+      - ML_SERVICE_URL=http://ml-service:8000
+      - REDIS_URL=redis://redis:6379
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=secret
+      - DATABASE_URL=postgres://user:pass@postgres:5432/vigilance
+    depends_on:
+      - ml-service
+      - redis
+      - neo4j
+      - postgres
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
+    networks:
+      - vigilance-network
+
+  # ---------------------------------------------------------------------------
+  # Machine Learning / Intelligence Service
+  # ---------------------------------------------------------------------------
+  ml-service:
+    build:
+      context: ./ml
+      dockerfile: Dockerfile
+    container_name: vigilance-ml
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_CACHE_DIR=/models
+    volumes:
+      - ml-models:/models
+    networks:
+      - vigilance-network
+
+  # ---------------------------------------------------------------------------
+  # Database: Graph (Entity Link Analysis)
+  # ---------------------------------------------------------------------------
+  neo4j:
+    image: neo4j:5.12.0
+    container_name: vigilance-neo4j
+    restart: unless-stopped
+    ports:
+      - "7474:7474" # HTTP
+      - "7687:7687" # Bolt
+    environment:
+      - NEO4J_AUTH=neo4j/secret
+    volumes:
+      - neo4j-data:/data
+    networks:
+      - vigilance-network
+
+  # ---------------------------------------------------------------------------
+  # Database: Time-Series / Telemetry
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: timescale/timescaledb:latest-pg14
+    container_name: vigilance-timescale
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=vigilance
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - vigilance-network
+
+  # ---------------------------------------------------------------------------
+  # Cache & Pub/Sub
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7.2-alpine
+    container_name: vigilance-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
     networks:
       - vigilance-network
 
@@ -65,8 +143,10 @@ networks:
     driver: bridge
 
 # =============================================================================
-# Volumes (for future database integration)
+# Volumes (Persistent Data)
 # =============================================================================
-# volumes:
-#   postgres-data:
-#   redis-data:
+volumes:
+  postgres-data:
+  redis-data:
+  neo4j-data:
+  ml-models:
