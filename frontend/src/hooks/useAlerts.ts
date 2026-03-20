@@ -124,26 +124,39 @@ export function useAlerts(options: UseAlertsOptions = {}): UseAlertsReturn {
 
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(true);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [error, setError] = useState<string | null>(null);
 
     // ---------------------------------------------------------------------------
     // Initialize alerts
     // ---------------------------------------------------------------------------
     useEffect(() => {
+        let mounted = true;
+
         if (demoMode) {
-            // Generate initial demo alerts
-            setAlerts(generateInitialAlerts(10));
-            setLoading(false);
+            // Wait for next tick to avoid synchronous state updates in effect during initial render
+            setTimeout(() => {
+                if (mounted) {
+                    setAlerts(generateInitialAlerts(10));
+                    setLoading(false);
+                }
+            }, 0);
         } else {
             // TODO: Fetch real alerts from API
             // try {
             //   const response = await getAlerts();
-            //   setAlerts(response.data);
+            //   if (mounted) setAlerts(response.data);
             // } catch (err) {
-            //   setError('Failed to fetch alerts');
+            //   if (mounted) setError('Failed to fetch alerts');
             // }
-            setLoading(false);
+            setTimeout(() => {
+                if (mounted) setLoading(false);
+            }, 0);
         }
+
+        return () => {
+            mounted = false;
+        };
     }, [demoMode]);
 
     // ---------------------------------------------------------------------------

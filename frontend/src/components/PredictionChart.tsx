@@ -133,6 +133,30 @@ const PEAK_PREDICTIONS = findPeaks(DEMO_DATA);
 // COMPONENT
 // =============================================================================
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload) return null;
+
+    return (
+        <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 shadow-lg">
+            <p className="text-white font-medium mb-2">{label} UTC</p>
+            <div className="space-y-1">
+                {payload.map((entry: any, index: number) => (
+                    <div key={index} className="flex items-center justify-between space-x-4 text-sm">
+                        <div className="flex items-center">
+                            <div
+                                className="w-3 h-3 rounded-full mr-2"
+                                style={{ backgroundColor: entry.color }}
+                            />
+                            <span className="text-slate-400">{entry.name}:</span>
+                        </div>
+                        <span className="font-mono text-white">{Math.round(entry.value)}%</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 const PredictionChart: React.FC<PredictionChartProps> = ({
     height = 300,
     showLegend = true,
@@ -142,34 +166,6 @@ const PredictionChart: React.FC<PredictionChartProps> = ({
     // ---------------------------------------------------------------------------
 
     const [selectedSector, setSelectedSector] = useState<string | null>(null);
-
-    // ---------------------------------------------------------------------------
-    // CUSTOM TOOLTIP
-    // ---------------------------------------------------------------------------
-
-    const CustomTooltip = ({ active, payload, label }: any) => {
-        if (!active || !payload) return null;
-
-        return (
-            <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 shadow-lg">
-                <p className="text-white font-medium mb-2">{label} UTC</p>
-                <div className="space-y-1">
-                    {payload.map((entry: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between space-x-4 text-sm">
-                            <div className="flex items-center">
-                                <div
-                                    className="w-3 h-3 rounded-full mr-2"
-                                    style={{ backgroundColor: entry.color }}
-                                />
-                                <span className="text-slate-400">{entry.name}:</span>
-                            </div>
-                            <span className="font-mono text-white">{Math.round(entry.value)}%</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
-    };
 
     // ---------------------------------------------------------------------------
     // RENDER
