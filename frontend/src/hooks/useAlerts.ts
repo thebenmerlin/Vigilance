@@ -37,11 +37,29 @@ export function useAlerts(options: UseAlertsOptions = {}): UseAlertsReturn {
 
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(true);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         let mounted = true;
+
+        // Fetch historical alerts initially
+        const fetchInitialAlerts = async () => {
+            try {
+                const response = await fetch(`${backendUrl}/api/alerts?limit=${maxAlerts}`);
+                if (!response.ok) throw new Error('Failed to fetch historical alerts');
+                const data = await response.json();
+                if (mounted && data.success) {
+                    setAlerts(data.data);
+                }
+            } catch (err: any) {
+                console.error('[useAlerts] Fetch error:', err.message);
+                if (mounted) setError(err.message);
+            } finally {
+                if (mounted) setLoading(false);
+            }
+        };
+
+        fetchInitialAlerts();
 
         // Initialize socket connection
         const socket: Socket = io(backendUrl);
@@ -49,7 +67,6 @@ export function useAlerts(options: UseAlertsOptions = {}): UseAlertsReturn {
         socket.on('connect', () => {
             console.log('[Socket] Connected to real-time feed');
             if (mounted) {
-                setLoading(false);
                 setError(null);
             }
         });
@@ -77,20 +94,31 @@ export function useAlerts(options: UseAlertsOptions = {}): UseAlertsReturn {
         };
     }, [backendUrl, maxAlerts]);
 
-    const acknowledgeAlert = useCallback((alertId: string) => {
-        setAlerts((prev) =>
-            prev.map((alert) =>
-                alert.id === alertId
-                    ? {
-                        ...alert,
-                        status: 'acknowledged' as AlertStatus,
-                        acknowledgedAt: new Date().toISOString(),
-                        acknowledgedBy: 'Current User',
-                    }
-                    : alert
-            )
-        );
-    }, []);
+    const acknowledgeAlert = useCallback(async (alertId: string) => {
+        try {
+            const response = await fetch(`${backendUrl}/api/alerts/${alertId}/acknowledge`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (!response.ok) throw new Error('Failed to acknowledge alert');
+
+            setAlerts((prev) =>
+                prev.map((alert) =>
+                    alert.id === alertId
+                        ? {
+                            ...alert,
+                            status: 'acknowledged' as AlertStatus,
+                            acknowledgedAt: new Date().toISOString(),
+                            acknowledgedBy: 'Current User',
+                        }
+                        : alert
+                )
+            );
+        } catch (err: any) {
+            console.error('[useAlerts] Acknowledge error:', err.message);
+        }
+    }, [backendUrl]);
 
     const unacknowledgedCount = alerts.reduce(
         (acc, alert) => {

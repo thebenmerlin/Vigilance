@@ -44,6 +44,8 @@ import mlProxyRouter from './routes/mlProxy.js';
 
 // Import real-time event simulator
 import { startAlertSimulator } from './realtime/alertSimulator.js';
+import { initializeDatabases } from './data/db/index.js';
+import { seedDatabases } from './data/db/seed.js';
 
 // =============================================================================
 // CONFIGURATION
@@ -168,8 +170,11 @@ io.on('connection', (socket) => {
     });
 });
 
-// Start alert simulator (generates fake alerts for demo)
-startAlertSimulator(io);
+// Initialize Database and Start Alert Simulator
+initializeDatabases().then(async () => {
+    await seedDatabases();
+    startAlertSimulator(io);
+});
 
 // =============================================================================
 // SERVER START
