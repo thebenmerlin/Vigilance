@@ -138,7 +138,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
     return (
         <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 shadow-lg">
-            <p className="text-white font-medium mb-2">{label} UTC</p>
+            <p className="text-white font-medium mb-2">{label} IST</p>
             <div className="space-y-1">
                 {payload.map((entry: any, index: number) => (
                     <div key={index} className="flex items-center justify-between space-x-4 text-sm">

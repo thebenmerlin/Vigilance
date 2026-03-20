@@ -81,7 +81,7 @@ function App(): React.JSX.Element {
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white relative">
+    <div className="min-h-screen bg-black text-white relative">
       {/* 
         Top Navigation Bar
         Contains: Logo, breadcrumbs, system status, user info

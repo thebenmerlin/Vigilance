@@ -148,7 +148,7 @@ const VideoFeed: React.FC<VideoFeedProps> = ({
     };
 
     const formatTimestamp = (): string => {
-        return currentTime.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+        return currentTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }).replace(',', '') + ' IST';
     };
 
     const getFeedBackgroundStyle = () => {

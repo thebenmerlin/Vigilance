@@ -19,6 +19,7 @@ async function verifyFeature(page) {
         await page.mouse.up();
     }
 
+
     await page.waitForTimeout(1000); // Wait for animation
 
     // Take screenshot of new layout
@@ -32,6 +33,7 @@ async function run() {
         viewport: { width: 1280, height: 1024 }
     });
     const page = await context.newPage();
+
 
     try {
         await verifyFeature(page);

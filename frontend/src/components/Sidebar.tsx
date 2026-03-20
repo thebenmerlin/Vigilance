@@ -136,7 +136,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       className={`
         fixed left-0 top-16
         h-[calc(100vh-64px)]
-        bg-slate-800 
+        bg-black
         border-r border-slate-700
         transition-all duration-300 ease-in-out
         z-40

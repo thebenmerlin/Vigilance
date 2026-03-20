@@ -212,7 +212,7 @@ const Dashboard: React.FC = () => {
    * Format date for header display
    */
   const formatDateTime = (): string => {
-    return currentTime.toLocaleString('en-US', {
+    return currentTime.toLocaleString('en-IN', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -221,6 +221,7 @@ const Dashboard: React.FC = () => {
       minute: '2-digit',
       second: '2-digit',
       hour12: false,
+      timeZone: 'Asia/Kolkata',
     });
   };
 
@@ -251,7 +252,7 @@ const Dashboard: React.FC = () => {
 
         <div className="text-right">
           <div className="text-white font-mono text-sm">
-            {formatDateTime()} UTC
+            {formatDateTime()} IST
           </div>
           <div className="text-xs text-slate-500 mt-0.5">
             Last sync: Just now
