@@ -132,10 +132,7 @@ const AlertsFeed: React.FC<AlertsFeedProps> = ({
     // STATE & HOOKS
     // ---------------------------------------------------------------------------
 
-    const { alerts, loading, acknowledgeAlert, unacknowledgedCount } = useAlerts({
-        demoMode: true,
-        demoInterval: 20000, // New alert every 20 seconds
-    });
+    const { alerts, loading, acknowledgeAlert, unacknowledgedCount } = useAlerts();
 
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
