@@ -261,16 +261,26 @@ const VideoFeed: React.FC<VideoFeedProps> = ({
 
             {/* Video Feed Area */}
             <div className={`relative ${height} bg-slate-900 overflow-hidden`}>
-                {/* Simulated Video Feed - Dynamic background based on spectral type */}
+                {/* Real Video Background Element */}
                 <div
-                    className="absolute inset-0 transition-all duration-500"
+                    className="absolute inset-0 transition-all duration-500 flex items-center justify-center bg-black"
                     style={getFeedBackgroundStyle() as React.CSSProperties}
                 >
+                    <video
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover mix-blend-overlay opacity-80"
+                        src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
+                        // Note: TearsOfSteel is a reliable 1080p open-source test clip that provides consistent movement for drawing ML bounding boxes over.
+                    />
+
                     {/* Scan lines effect */}
                     <div
-                        className="absolute inset-0 pointer-events-none opacity-10"
+                        className="absolute inset-0 pointer-events-none opacity-20 mix-blend-overlay"
                         style={{
-                            backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255,255,255,0.03) 1px, rgba(255,255,255,0.03) 2px)',
+                            backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255,255,255,0.05) 1px, rgba(255,255,255,0.05) 2px)',
                         }}
                     />
                 </div>
