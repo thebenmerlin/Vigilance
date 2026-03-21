@@ -29,7 +29,6 @@ import {
   User,
   TerminalSquare
 } from 'lucide-react';
-import { useAppStore } from '../store';
 
 // =============================================================================
 // TYPES
@@ -90,12 +89,11 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onToggleCopilot }) => {
    * Format current time for display
    */
   const formatTime = (): string => {
-    return currentTime.toLocaleTimeString('en-IN', {
+    return currentTime.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
       hour12: false,
-      timeZone: 'Asia/Kolkata',
     });
   };
 
@@ -103,12 +101,11 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onToggleCopilot }) => {
    * Format current date for display
    */
   const formatDate = (): string => {
-    return currentTime.toLocaleDateString('en-IN', {
+    return currentTime.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
       year: 'numeric',
-      timeZone: 'Asia/Kolkata',
     });
   };
 
@@ -117,7 +114,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onToggleCopilot }) => {
   // ---------------------------------------------------------------------------
 
   return (
-    <nav className="bg-black border-b border-slate-700 h-16 px-4 sticky top-0 z-50">
+    <nav className="bg-slate-800 border-b border-slate-700 h-16 px-4 sticky top-0 z-50">
       <div className="h-full flex items-center justify-between">
         {/* ------------------------------------------------------------------- */}
         {/* LEFT SECTION: Menu, Logo, Breadcrumb */}
@@ -176,7 +173,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onToggleCopilot }) => {
           {/* Date/Time Display */}
           <div className="hidden md:block text-right">
             <div className="text-white font-mono text-sm font-medium">
-              {formatTime()} IST
+              {formatTime()} UTC
             </div>
             <div className="text-slate-400 text-xs">
               {formatDate()}
@@ -225,13 +222,13 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onToggleCopilot }) => {
             >
               {/* Avatar */}
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-bold">{useAppStore.getState().user?.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}</span>
+                <span className="text-white text-sm font-bold">CM</span>
               </div>
 
               {/* Name and Rank */}
               <div className="hidden lg:block text-left">
-                <div className="text-sm font-medium text-white">{useAppStore.getState().user?.name || 'Operator'}</div>
-                <div className="text-xs text-slate-400">{useAppStore.getState().user?.role || 'Access Level 1'}</div>
+                <div className="text-sm font-medium text-white">Col. Mitchell</div>
+                <div className="text-xs text-slate-400">Sector Command</div>
               </div>
 
               <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
@@ -255,13 +252,13 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onToggleCopilot }) => {
                   Settings
                 </a>
                 <hr className="my-1 border-slate-700" />
-                <button
-                  onClick={() => useAppStore.getState().logout()}
-                  className="flex w-full items-center px-4 py-2 text-sm text-red-400 hover:bg-slate-700"
+                <a
+                  href="#"
+                  className="flex items-center px-4 py-2 text-sm text-red-400 hover:bg-slate-700"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
-                </button>
+                </a>
               </div>
             )}
           </div>

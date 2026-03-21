@@ -10,7 +10,6 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchWithAuth } from '../store';
 import { Terminal, X, Send, Cpu, Loader } from 'lucide-react';
 
 interface VanguardAIProps {
@@ -25,6 +24,14 @@ interface Message {
     timestamp: Date;
     isTyping?: boolean;
 }
+
+// Simulated AI responses based on keywords
+const DEMO_RESPONSES: Record<string, string> = {
+    'anomaly': "Analyzing anomaly density... Northern Ridge sector shows a 42% increase in electromagnetic interference over the last 4 hours. Correlating with recent unidentified vehicular movement.",
+    'intercept': "Drafting intercept protocol. Recommended action: Dispatch Drone Swarm Alpha from Outpost 9. Estimated Time to Intercept (ETI) is 4m 12s. Awaiting authorization to execute.",
+    'status': "All primary systems are nominal. Radar-02 in Sector Charlie is showing degraded performance (Signal/Noise ratio below threshold). Maintenance team alerted.",
+    'default': "Query received. Processing tactical data streams. Standby...",
+};
 
 const VanguardAI: React.FC<VanguardAIProps> = ({ isOpen, onClose }) => {
     const [messages, setMessages] = useState<Message[]>([
@@ -47,7 +54,7 @@ const VanguardAI: React.FC<VanguardAIProps> = ({ isOpen, onClose }) => {
         scrollToBottom();
     }, [messages]);
 
-    const handleSend = async () => {
+    const handleSend = () => {
         if (!inputValue.trim()) return;
 
         const userMsg: Message = {
@@ -60,6 +67,7 @@ const VanguardAI: React.FC<VanguardAIProps> = ({ isOpen, onClose }) => {
         setMessages(prev => [...prev, userMsg]);
         setInputValue('');
 
+        // Simulate AI thinking
         const thinkingId = (Date.now() + 1).toString();
         setMessages(prev => [...prev, {
             id: thinkingId,
@@ -69,33 +77,24 @@ const VanguardAI: React.FC<VanguardAIProps> = ({ isOpen, onClose }) => {
             isTyping: true
         }]);
 
-        try {
-            const response = await fetchWithAuth('/api/ml/chat', {
-                method: 'POST',
-                body: JSON.stringify({
-                    session_id: 'default',
-                    message: userMsg.text,
-                    context: { active_sector: 'All' }
-                })
-            });
+        // Generate response
+        setTimeout(() => {
+            const lowerInput = userMsg.text.toLowerCase();
+            let responseText = DEMO_RESPONSES.default;
 
-            if (!response.ok) throw new Error('Failed to connect to ML Copilot');
-
-            const data = await response.json();
+            for (const key in DEMO_RESPONSES) {
+                if (lowerInput.includes(key)) {
+                    responseText = DEMO_RESPONSES[key];
+                    break;
+                }
+            }
 
             setMessages(prev => prev.map(msg =>
                 msg.id === thinkingId
-                    ? { ...msg, text: data.response, isTyping: false }
+                    ? { ...msg, text: responseText, isTyping: false }
                     : msg
             ));
-
-        } catch (error: any) {
-            setMessages(prev => prev.map(msg =>
-                msg.id === thinkingId
-                    ? { ...msg, text: `ERR_CONNECTION_FAILED: ${error.message}`, isTyping: false }
-                    : msg
-            ));
-        }
+        }, 1500); // 1.5s simulated delay
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

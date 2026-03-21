@@ -34,7 +34,6 @@ import { createServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
 
 // Import routes
-import authRouter from './routes/auth.js';
 import healthRouter from './routes/health.js';
 import threatsRouter from './routes/threats.js';
 import alertsRouter from './routes/alerts.js';
@@ -42,13 +41,9 @@ import sensorsRouter from './routes/sensors.js';
 import predictionsRouter from './routes/predictions.js';
 import statusRouter from './routes/status.js';
 import mlProxyRouter from './routes/mlProxy.js';
-import { authenticateJWT, requireRole } from './middleware/auth.js';
-import jwt from 'jsonwebtoken';
 
 // Import real-time event simulator
 import { startAlertSimulator } from './realtime/alertSimulator.js';
-import { initializeDatabases } from './data/db/index.js';
-import { seedDatabases } from './data/db/seed.js';
 
 // =============================================================================
 // CONFIGURATION
@@ -106,17 +101,13 @@ if (NODE_ENV === 'development') {
 // =============================================================================
 
 // Mount route handlers
-app.use('/api/auth', authRouter);
 app.use('/api/health', healthRouter);
-// Protect the rest of the API
-app.use('/api/threats', authenticateJWT, threatsRouter);
-app.use('/api/alerts', authenticateJWT, alertsRouter);
-app.use('/api/sensors', authenticateJWT, sensorsRouter);
-app.use('/api/predictions', authenticateJWT, predictionsRouter);
-app.use('/api/status', authenticateJWT, statusRouter);
-
-// Restrict ML Operations to COMMANDER only
-app.use('/api/ml', authenticateJWT, requireRole(['COMMANDER']), mlProxyRouter);
+app.use('/api/threats', threatsRouter);
+app.use('/api/alerts', alertsRouter);
+app.use('/api/sensors', sensorsRouter);
+app.use('/api/predictions', predictionsRouter);
+app.use('/api/status', statusRouter);
+app.use('/api/ml', mlProxyRouter);
 
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {
@@ -156,24 +147,8 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 // SOCKET.IO SETUP
 // =============================================================================
 
-io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    if (!token) {
-        return next(new Error('Authentication error: Missing token'));
-    }
-
-    try {
-        const JWT_SECRET = process.env.JWT_SECRET || (() => { throw new Error("JWT_SECRET environment variable is missing"); })();
-        const user = jwt.verify(token, JWT_SECRET);
-        (socket as any).user = user;
-        next();
-    } catch (err) {
-        return next(new Error('Authentication error: Invalid token'));
-    }
-});
-
 io.on('connection', (socket) => {
-    console.log(`[Socket] Client connected: ${socket.id} (User: ${(socket as any).user?.username})`);
+    console.log(`[Socket] Client connected: ${socket.id}`);
 
     // Send welcome message
     socket.emit('connected', {
@@ -193,11 +168,8 @@ io.on('connection', (socket) => {
     });
 });
 
-// Initialize Database and Start Alert Simulator
-initializeDatabases().then(async () => {
-    await seedDatabases();
-    startAlertSimulator(io);
-});
+// Start alert simulator (generates fake alerts for demo)
+startAlertSimulator(io);
 
 // =============================================================================
 // SERVER START

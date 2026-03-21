@@ -116,7 +116,7 @@ const formatTime = (timestamp: string): string => {
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
 
-    return date.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+    return date.toLocaleDateString();
 };
 
 // =============================================================================

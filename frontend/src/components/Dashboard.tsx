@@ -30,6 +30,7 @@ import { Responsive as ResponsiveGridLayout, Layout } from 'react-grid-layout';
 import { WidthProvider } from 'react-grid-layout/legacy';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
+import { motion } from 'framer-motion';
 import {
   AlertTriangle,
   Users,
@@ -212,7 +213,7 @@ const Dashboard: React.FC = () => {
    * Format date for header display
    */
   const formatDateTime = (): string => {
-    return currentTime.toLocaleString('en-IN', {
+    return currentTime.toLocaleString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -221,7 +222,6 @@ const Dashboard: React.FC = () => {
       minute: '2-digit',
       second: '2-digit',
       hour12: false,
-      timeZone: 'Asia/Kolkata',
     });
   };
 
@@ -235,7 +235,12 @@ const Dashboard: React.FC = () => {
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="space-y-6 overflow-x-hidden"
+    >
       {/* ===================================================================== */}
       {/* Dashboard Header */}
       {/* ===================================================================== */}
@@ -252,7 +257,7 @@ const Dashboard: React.FC = () => {
 
         <div className="text-right">
           <div className="text-white font-mono text-sm">
-            {formatDateTime()} IST
+            {formatDateTime()} UTC
           </div>
           <div className="text-xs text-slate-500 mt-0.5">
             Last sync: Just now
@@ -279,7 +284,7 @@ const Dashboard: React.FC = () => {
                   <div className="absolute top-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                       <GripHorizontal className="w-4 h-4 text-slate-500" />
                   </div>
-                  <div className="h-full pointer-events-auto" onMouseDown={e => e.stopPropagation()}>
+                  <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4 }} className="h-full pointer-events-auto" onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
                       <StatsCard
                           title="Active Alerts"
                           value={stats.activeAlerts}
@@ -289,14 +294,14 @@ const Dashboard: React.FC = () => {
                           change={stats.activeAlerts > INITIAL_STATS.activeAlerts ? 15 : -10}
                           changeType={stats.activeAlerts > INITIAL_STATS.activeAlerts ? 'increase' : 'decrease'}
                       />
-                  </div>
+                  </motion.div>
               </div>
 
               <div key="stats-personnel" className="cursor-move drag-handle relative group">
                   <div className="absolute top-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                       <GripHorizontal className="w-4 h-4 text-slate-500" />
                   </div>
-                  <div className="h-full pointer-events-auto" onMouseDown={e => e.stopPropagation()}>
+                  <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4, delay: 0.1 }} className="h-full pointer-events-auto" onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
                       <StatsCard
                           title="Personnel"
                           value={stats.personnel}
@@ -304,14 +309,14 @@ const Dashboard: React.FC = () => {
                           icon={<Users className="w-5 h-5" />}
                           description="On duty"
                       />
-                  </div>
+                  </motion.div>
               </div>
 
               <div key="stats-sensors" className="cursor-move drag-handle relative group">
                   <div className="absolute top-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                       <GripHorizontal className="w-4 h-4 text-slate-500" />
                   </div>
-                  <div className="h-full pointer-events-auto" onMouseDown={e => e.stopPropagation()}>
+                  <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4, delay: 0.2 }} className="h-full pointer-events-auto" onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
                       <StatsCard
                           title="Sensors Online"
                           value={`${sensorPercentage}%`}
@@ -319,14 +324,14 @@ const Dashboard: React.FC = () => {
                           icon={<Radar className="w-5 h-5" />}
                           description={`${stats.sensorsOnline}/${stats.sensorsTotal} operational`}
                       />
-                  </div>
+                  </motion.div>
               </div>
 
               <div key="stats-global" className="cursor-move drag-handle relative group">
                   <div className="absolute top-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                       <GripHorizontal className="w-4 h-4 text-slate-500" />
                   </div>
-                  <div className="h-full pointer-events-auto" onMouseDown={e => e.stopPropagation()}>
+                  <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4, delay: 0.3 }} className="h-full pointer-events-auto" onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
                       <StatsCard
                           title="Global Ops"
                           value={stats.globalOps}
@@ -334,7 +339,7 @@ const Dashboard: React.FC = () => {
                           icon={<Globe className="w-5 h-5" />}
                           description="Active missions"
                       />
-                  </div>
+                  </motion.div>
               </div>
 
               <div key="map">
@@ -410,7 +415,7 @@ const Dashboard: React.FC = () => {
           <span className="text-green-500 ml-2">● All Systems Operational</span>
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
