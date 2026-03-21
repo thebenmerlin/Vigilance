@@ -10,7 +10,7 @@ const Systems: React.FC = () => {
         const fetchSensors = async () => {
             try {
                 const { fetchWithAuth } = await import('../store');
-                const res = await fetchWithAuth('http://localhost:3001/api/sensors');
+                const res = await fetchWithAuth('/api/sensors');
                 if (!res.ok) throw new Error('Failed to fetch sensors');
                 const data = await res.json();
                 setSensors(data.data || []);
