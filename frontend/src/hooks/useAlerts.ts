@@ -32,7 +32,7 @@ interface UseAlertsReturn {
 export function useAlerts(options: UseAlertsOptions = {}): UseAlertsReturn {
     const {
         maxAlerts = 50,
-        backendUrl = 'http://localhost:3001'
+        backendUrl = ''
     } = options;
 
     const [alerts, setAlerts] = useState<Alert[]>([]);
