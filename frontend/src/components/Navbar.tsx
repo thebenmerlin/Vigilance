@@ -29,6 +29,7 @@ import {
   User,
   TerminalSquare
 } from 'lucide-react';
+import { useAppStore } from '../store';
 
 // =============================================================================
 // TYPES
@@ -224,13 +225,13 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onToggleCopilot }) => {
             >
               {/* Avatar */}
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-bold">CM</span>
+                <span className="text-white text-sm font-bold">{useAppStore.getState().user?.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}</span>
               </div>
 
               {/* Name and Rank */}
               <div className="hidden lg:block text-left">
-                <div className="text-sm font-medium text-white">Col. Mitchell</div>
-                <div className="text-xs text-slate-400">Sector Command</div>
+                <div className="text-sm font-medium text-white">{useAppStore.getState().user?.name || 'Operator'}</div>
+                <div className="text-xs text-slate-400">{useAppStore.getState().user?.role || 'Access Level 1'}</div>
               </div>
 
               <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
@@ -254,13 +255,13 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onToggleCopilot }) => {
                   Settings
                 </a>
                 <hr className="my-1 border-slate-700" />
-                <a
-                  href="#"
-                  className="flex items-center px-4 py-2 text-sm text-red-400 hover:bg-slate-700"
+                <button
+                  onClick={() => useAppStore.getState().logout()}
+                  className="flex w-full items-center px-4 py-2 text-sm text-red-400 hover:bg-slate-700"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
-                </a>
+                </button>
               </div>
             )}
           </div>
