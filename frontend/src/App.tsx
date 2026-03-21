@@ -29,6 +29,13 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import VanguardAI from './components/VanguardAI';
+import ThreatAnalysis from './pages/ThreatAnalysis';
+import Operations from './pages/Operations';
+import Surveillance from './pages/Surveillance';
+import Alerts from './pages/Alerts';
+import Analytics from './pages/Analytics';
+import Personnel from './pages/Personnel';
+import Systems from './pages/Systems';
 import PlaceholderPage from './pages/PlaceholderPage';
 import { useAppStore } from './store';
 import './styles/globals.css';
@@ -86,13 +93,13 @@ function App(): React.JSX.Element {
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/threats" element={<PlaceholderPage title="Threat Analysis" />} />
-              <Route path="/operations" element={<PlaceholderPage title="Operations Center" />} />
-              <Route path="/surveillance" element={<PlaceholderPage title="Surveillance" />} />
-              <Route path="/alerts" element={<PlaceholderPage title="Alerts & Incidents" />} />
-              <Route path="/analytics" element={<PlaceholderPage title="Intelligence Analytics" />} />
-              <Route path="/personnel" element={<PlaceholderPage title="Personnel & Assets" />} />
-              <Route path="/systems" element={<PlaceholderPage title="System Status" />} />
+              <Route path="/threats" element={<ThreatAnalysis />} />
+              <Route path="/operations" element={<Operations />} />
+              <Route path="/surveillance" element={<Surveillance />} />
+              <Route path="/alerts" element={<Alerts />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/personnel" element={<Personnel />} />
+              <Route path="/systems" element={<Systems />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </main>

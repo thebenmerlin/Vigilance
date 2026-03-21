@@ -17,6 +17,7 @@
 
 import { Router, Request, Response } from 'express';
 import { MOCK_SENSORS } from '../data/mockData.js';
+import { pgPool } from '../data/db/index.js';
 
 const router = Router();
 
@@ -24,28 +25,53 @@ const router = Router();
  * GET /api/sensors
  * Returns all sensors with their current status
  */
-router.get('/', (req: Request, res: Response) => {
-    const type = req.query.type as string;
-    const status = req.query.status as string;
+router.get('/', async (req: Request, res: Response) => {
+    try {
+        const type = req.query.type as string;
+        const status = req.query.status as string;
 
-    let sensors = [...MOCK_SENSORS];
+        const client = await pgPool.connect();
+        try {
+            let query = 'SELECT * FROM sensors';
+            let params: any[] = [];
 
-    // Filter by type if provided
-    if (type) {
-        sensors = sensors.filter(s => s.type === type);
+            if (type && status) {
+                query += ' WHERE type = $1 AND status = $2';
+                params = [type, status];
+            } else if (type) {
+                query += ' WHERE type = $1';
+                params = [type];
+            } else if (status) {
+                query += ' WHERE status = $1';
+                params = [status];
+            }
+
+            const result = await client.query(query, params);
+
+            // Map DB cols back to frontend interface
+            const sensors = result.rows.map(row => {
+                 const loc = typeof row.location === 'string' ? JSON.parse(row.location) : row.location;
+                 return {
+                     ...row,
+                     name: `Sensor ${row.id}`,
+                     sector: loc?.sector || 'Unknown',
+                     signalStrength: 100, // mock signal since DB only tracks battery/ping
+                     lastPing: row.last_seen
+                 };
+            });
+
+            res.json({
+                success: true,
+                data: sensors,
+                count: sensors.length,
+                timestamp: new Date().toISOString(),
+            });
+        } finally {
+            client.release();
+        }
+    } catch (err: any) {
+        res.status(500).json({ success: false, error: err.message });
     }
-
-    // Filter by status if provided
-    if (status) {
-        sensors = sensors.filter(s => s.status === status);
-    }
-
-    res.json({
-        success: true,
-        data: sensors,
-        count: sensors.length,
-        timestamp: new Date().toISOString(),
-    });
 });
 
 /**
