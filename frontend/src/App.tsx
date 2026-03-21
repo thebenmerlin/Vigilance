@@ -36,9 +36,23 @@ import Alerts from './pages/Alerts';
 import Analytics from './pages/Analytics';
 import Personnel from './pages/Personnel';
 import Systems from './pages/Systems';
+import Login from './pages/Login';
 import PlaceholderPage from './pages/PlaceholderPage';
 import { useAppStore } from './store';
 import './styles/globals.css';
+
+/**
+ * Protected Route Wrapper
+ */
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const isAuthenticated = useAppStore(state => state.isAuthenticated);
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 /**
  * Main Application Component
@@ -47,7 +61,7 @@ function App(): React.JSX.Element {
   // ---------------------------------------------------------------------------
   // STATE
   // ---------------------------------------------------------------------------
-  const { sidebarCollapsed, toggleSidebar, isCopilotOpen, toggleCopilot, setCopilotOpen } = useAppStore();
+  const { sidebarCollapsed, toggleSidebar, isCopilotOpen, toggleCopilot, setCopilotOpen, isAuthenticated } = useAppStore();
 
   // ---------------------------------------------------------------------------
   // RENDER
@@ -55,62 +69,70 @@ function App(): React.JSX.Element {
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-black text-white relative flex flex-col">
-        {/* 
-          Top Navigation Bar
-          Contains: Logo, breadcrumbs, system status, user info
-        */}
-        <Navbar
-          onMenuClick={toggleSidebar}
-          onToggleCopilot={toggleCopilot}
-        />
-
-        {/* Main Content Area with Sidebar */}
-        <div className="flex flex-1 overflow-hidden">
+      {isAuthenticated ? (
+        <div className="min-h-screen bg-black text-white relative flex flex-col">
           {/* 
-            Left Sidebar Navigation
-            Contains: Navigation menu, system status indicators
+            Top Navigation Bar
+            Contains: Logo, breadcrumbs, system status, user info
           */}
-          <Sidebar
-            collapsed={sidebarCollapsed}
-            onToggle={toggleSidebar}
+          <Navbar
+            onMenuClick={toggleSidebar}
+            onToggleCopilot={toggleCopilot}
           />
 
-          {/* 
-            Main Content Area
-            Adjusts padding based on sidebar width
-          */}
-          <main
-            className={`
-              flex-1
-              overflow-y-auto
-              p-6
-              transition-all
-              duration-300
-              ${sidebarCollapsed ? 'ml-16' : 'ml-64'}
-            `}
-          >
-            <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/threats" element={<ThreatAnalysis />} />
-              <Route path="/operations" element={<Operations />} />
-              <Route path="/surveillance" element={<Surveillance />} />
-              <Route path="/alerts" element={<Alerts />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/personnel" element={<Personnel />} />
-              <Route path="/systems" element={<Systems />} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </main>
-        </div>
+          {/* Main Content Area with Sidebar */}
+          <div className="flex flex-1 overflow-hidden">
+            {/*
+              Left Sidebar Navigation
+              Contains: Navigation menu, system status indicators
+            */}
+            <Sidebar
+              collapsed={sidebarCollapsed}
+              onToggle={toggleSidebar}
+            />
 
-        {/* Floating Vanguard AI Copilot */}
-        <VanguardAI
-          isOpen={isCopilotOpen}
-          onClose={() => setCopilotOpen(false)}
-        />
-      </div>
+            {/*
+              Main Content Area
+              Adjusts padding based on sidebar width
+            */}
+            <main
+              className={`
+                flex-1
+                overflow-y-auto
+                p-6
+                transition-all
+                duration-300
+                ${sidebarCollapsed ? 'ml-16' : 'ml-64'}
+              `}
+            >
+              <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/login" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/threats" element={<ProtectedRoute><ThreatAnalysis /></ProtectedRoute>} />
+                <Route path="/operations" element={<ProtectedRoute><Operations /></ProtectedRoute>} />
+                <Route path="/surveillance" element={<ProtectedRoute><Surveillance /></ProtectedRoute>} />
+                <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
+                <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+                <Route path="/personnel" element={<ProtectedRoute><Personnel /></ProtectedRoute>} />
+                <Route path="/systems" element={<ProtectedRoute><Systems /></ProtectedRoute>} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </main>
+          </div>
+
+          {/* Floating Vanguard AI Copilot */}
+          <VanguardAI
+            isOpen={isCopilotOpen}
+            onClose={() => setCopilotOpen(false)}
+          />
+        </div>
+      ) : (
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      )}
     </BrowserRouter>
   );
 }

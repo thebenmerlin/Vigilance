@@ -45,7 +45,8 @@ export function useAlerts(options: UseAlertsOptions = {}): UseAlertsReturn {
         // Fetch historical alerts initially
         const fetchInitialAlerts = async () => {
             try {
-                const response = await fetch(`${backendUrl}/api/alerts?limit=${maxAlerts}`);
+                const { fetchWithAuth } = await import('../store');
+                const response = await fetchWithAuth(`${backendUrl}/api/alerts?limit=${maxAlerts}`);
                 if (!response.ok) throw new Error('Failed to fetch historical alerts');
                 const data = await response.json();
                 if (mounted && data.success) {
@@ -62,7 +63,10 @@ export function useAlerts(options: UseAlertsOptions = {}): UseAlertsReturn {
         fetchInitialAlerts();
 
         // Initialize socket connection
-        const socket: Socket = io(backendUrl);
+        const token = localStorage.getItem('token');
+        const socket: Socket = io(backendUrl, {
+            auth: { token }
+        });
 
         socket.on('connect', () => {
             console.log('[Socket] Connected to real-time feed');
@@ -96,9 +100,9 @@ export function useAlerts(options: UseAlertsOptions = {}): UseAlertsReturn {
 
     const acknowledgeAlert = useCallback(async (alertId: string) => {
         try {
-            const response = await fetch(`${backendUrl}/api/alerts/${alertId}/acknowledge`, {
+            const { fetchWithAuth } = await import('../store');
+            const response = await fetchWithAuth(`${backendUrl}/api/alerts/${alertId}/acknowledge`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
             });
 
             if (!response.ok) throw new Error('Failed to acknowledge alert');

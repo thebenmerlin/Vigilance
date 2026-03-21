@@ -37,6 +37,7 @@ services:
       - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=secret
       - DATABASE_URL=postgres://user:pass@postgres:5432/vigilance
+      - JWT_SECRET=super_secret_vigilance_key_2026
     depends_on:
       - ml-service
       - redis

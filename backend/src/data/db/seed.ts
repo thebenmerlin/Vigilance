@@ -1,6 +1,7 @@
 import { pgPool, neo4jDriver, redisClient } from './index.js';
 import { MOCK_ALERTS, MOCK_THREATS, MOCK_SENSORS } from '../mockData.js';
 import { PoolClient } from 'pg';
+import bcrypt from 'bcryptjs';
 
 /**
  * Ensures Timescale and Graph schemas are present.
@@ -39,6 +40,17 @@ export async function seedDatabases() {
                 );
             `);
 
+            await pgClient.query(`
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    username VARCHAR(50) UNIQUE NOT null,
+                    password_hash VARCHAR(255) NOT null,
+                    role VARCHAR(20) NOT null,
+                    name VARCHAR(100) NOT null,
+                    last_login TIMESTAMP
+                );
+            `);
+
             // Seed Sensors
             const sensorCountResult = await pgClient.query('SELECT COUNT(*) FROM sensors');
             if (parseInt(sensorCountResult.rows[0].count) === 0) {
@@ -63,6 +75,26 @@ export async function seedDatabases() {
                          [a.id, a.title, a.priority, a.message, a.source, a.timestamp, a.status, JSON.stringify({ sector: a.sector })]
                      );
                  }
+            }
+
+            // Seed Admin User
+            const userCountResult = await pgClient.query('SELECT COUNT(*) FROM users');
+            if (parseInt(userCountResult.rows[0].count) === 0) {
+                 console.log('[Seed] Seeding default admin user...');
+                 const salt = await bcrypt.genSalt(10);
+                 const hash = await bcrypt.hash('admin123', salt);
+                 await pgClient.query(
+                     `INSERT INTO users (username, password_hash, role, name, last_login)
+                      VALUES ($1, $2, $3, $4, $5)`,
+                     ['admin', hash, 'COMMANDER', 'Col. Mitchell', new Date().toISOString()]
+                 );
+
+                 const analystHash = await bcrypt.hash('analyst123', salt);
+                 await pgClient.query(
+                     `INSERT INTO users (username, password_hash, role, name, last_login)
+                      VALUES ($1, $2, $3, $4, $5)`,
+                     ['analyst', analystHash, 'ANALYST', 'Lt. Vance', new Date().toISOString()]
+                 );
             }
 
         } finally {

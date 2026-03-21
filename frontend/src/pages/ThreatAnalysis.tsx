@@ -27,7 +27,8 @@ const ThreatAnalysis: React.FC = () => {
     useEffect(() => {
         const fetchThreats = async () => {
             try {
-                const res = await fetch('http://localhost:3001/api/threats');
+                const { fetchWithAuth } = await import('../store');
+                const res = await fetchWithAuth('http://localhost:3001/api/threats');
                 if (!res.ok) throw new Error('Failed to fetch threats');
                 const data = await res.json();
                 setThreats(data.data || []);
