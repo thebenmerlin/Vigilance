@@ -22,7 +22,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { fetchWithAuth } from '../store';
 import {
     Video,
     VideoOff,
@@ -120,50 +119,23 @@ const VideoFeed: React.FC<VideoFeedProps> = ({
     }, []);
 
     useEffect(() => {
-        // Fetch real ML inference detections
-        let mounted = true;
+        // Simulate detection updates
+        const interval = setInterval(() => {
+            // Randomly add or remove detections based on demo data
+            const shuffled = [...DEMO_DETECTIONS].sort(() => 0.5 - Math.random());
+            const numToShow = Math.floor(Math.random() * 3) + 1; // 1 to 3 detections
 
-        const runInference = async () => {
-            if (!mounted || selectedSource.status === 'offline') return;
+            const activeDetections = shuffled.slice(0, numToShow).map(d => ({
+                ...d,
+                anomalyScore: Math.floor(Math.random() * 40) + 50 + (d.threatLevel * 5),
+                kineticSpeed: Math.floor(Math.random() * 5)
+            }));
 
-            try {
-                const response = await fetchWithAuth('/api/ml/detect', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        source_id: selectedSource.id,
-                        spectral_type: selectedSource.spectralType,
-                        timestamp: Date.now() / 1000
-                    })
-                });
+            setDetections(activeDetections);
+        }, 3000);
 
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.status === 'success' && mounted) {
-                        const parsedDetections = data.detections.map((d: any) => ({
-                            id: d.id,
-                            label: d.label,
-                            confidence: d.confidence,
-                            threatLevel: d.threatLevel,
-                            bbox: d.bbox,
-                            anomalyScore: d.biometrics?.anomaly_score,
-                            kineticSpeed: d.biometrics?.kinetic_velocity
-                        }));
-                        setDetections(parsedDetections);
-                    }
-                }
-            } catch (error) {
-                console.error('ML Detection failed', error);
-            }
-        };
-
-        const interval = setInterval(runInference, 3000);
-        runInference(); // Run immediately on mount/source change
-
-        return () => {
-            mounted = false;
-            clearInterval(interval);
-        };
-    }, [selectedSource]);
+        return () => clearInterval(interval);
+    }, []);
 
     // ---------------------------------------------------------------------------
     // HELPERS
@@ -176,7 +148,7 @@ const VideoFeed: React.FC<VideoFeedProps> = ({
     };
 
     const formatTimestamp = (): string => {
-        return currentTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }).replace(',', '') + ' IST';
+        return currentTime.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
     };
 
     const getFeedBackgroundStyle = () => {
@@ -343,7 +315,7 @@ const VideoFeed: React.FC<VideoFeedProps> = ({
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="opacity-70">Kinetic:</span>
-                                    <span className="font-mono">{detection.kineticSpeed || '0m/s'}</span>
+                                    <span className="font-mono">{detection.kineticSpeed || 0}m/s</span>
                                 </div>
                             </div>
 

@@ -23,36 +23,12 @@
  * =============================================================================
  */
 
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import VanguardAI from './components/VanguardAI';
-import ThreatAnalysis from './pages/ThreatAnalysis';
-import Operations from './pages/Operations';
-import Surveillance from './pages/Surveillance';
-import Alerts from './pages/Alerts';
-import Analytics from './pages/Analytics';
-import Personnel from './pages/Personnel';
-import Systems from './pages/Systems';
-import Login from './pages/Login';
-import PlaceholderPage from './pages/PlaceholderPage';
-import { useAppStore } from './store';
 import './styles/globals.css';
-
-/**
- * Protected Route Wrapper
- */
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = useAppStore(state => state.isAuthenticated);
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-};
 
 /**
  * Main Application Component
@@ -61,79 +37,123 @@ function App(): React.JSX.Element {
   // ---------------------------------------------------------------------------
   // STATE
   // ---------------------------------------------------------------------------
-  const { sidebarCollapsed, toggleSidebar, isCopilotOpen, toggleCopilot, setCopilotOpen, isAuthenticated } = useAppStore();
+
+  /**
+   * Sidebar collapse state
+   * When collapsed, sidebar shows only icons
+   */
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  /**
+   * Current active page/section
+   * Used for sidebar navigation highlighting
+   */
+  const [activePage, setActivePage] = useState('dashboard');
+
+  /**
+   * Toggle state for Vanguard AI Copilot
+   */
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+
+  // ---------------------------------------------------------------------------
+  // HANDLERS
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Toggle sidebar collapse state
+   */
+  const toggleSidebar = (): void => {
+    setSidebarCollapsed((prev) => !prev);
+  };
+
+  /**
+   * Handle navigation item click
+   * TODO: Integrate with React Router for actual navigation
+   */
+  const handleNavigate = (page: string): void => {
+    setActivePage(page);
+    console.log(`[Navigation] Navigating to: ${page}`);
+    // TODO: Use router.push() when React Router is set up
+  };
 
   // ---------------------------------------------------------------------------
   // RENDER
   // ---------------------------------------------------------------------------
 
   return (
-    <BrowserRouter>
-      {isAuthenticated ? (
-        <div className="min-h-screen bg-black text-white relative flex flex-col">
+    <div className="min-h-screen bg-slate-900 text-white relative">
+      {/*
+        Top Navigation Bar
+        Contains: Logo, breadcrumbs, system status, user info
+      */}
+      <Navbar
+        onMenuClick={toggleSidebar}
+        onToggleCopilot={() => setIsCopilotOpen(prev => !prev)}
+      />
+
+      {/* Main Content Area with Sidebar */}
+      <div className="flex">
+        {/*
+          Left Sidebar Navigation
+          Contains: Navigation menu, system status indicators
+        */}
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          activePage={activePage}
+          onNavigate={handleNavigate}
+          onToggle={toggleSidebar}
+        />
+
+        {/*
+          Main Content Area
+          Adjusts padding based on sidebar width
+        */}
+        <main
+          className={`
+            flex-1
+            min-h-[calc(100vh-64px)]
+            p-6
+            transition-all
+            duration-300
+            ${sidebarCollapsed ? 'ml-16' : 'ml-64'}
+          `}
+        >
           {/* 
-            Top Navigation Bar
-            Contains: Logo, breadcrumbs, system status, user info
+            Dashboard is the main content
+            TODO: Replace with React Router <Outlet /> for multi-page support
           */}
-          <Navbar
-            onMenuClick={toggleSidebar}
-            onToggleCopilot={toggleCopilot}
-          />
+          {activePage === 'dashboard' && <Dashboard />}
 
-          {/* Main Content Area with Sidebar */}
-          <div className="flex flex-1 overflow-hidden">
-            {/*
-              Left Sidebar Navigation
-              Contains: Navigation menu, system status indicators
-            */}
-            <Sidebar
-              collapsed={sidebarCollapsed}
-              onToggle={toggleSidebar}
-            />
+          {/*
+            Placeholder for other pages
+            TODO: Implement these components
+          */}
+          {activePage === 'threats' && (
+            <div className="flex items-center justify-center h-64 card">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-white mb-2">Threat Analysis</h2>
+                <p className="text-slate-400">Coming soon...</p>
+              </div>
+            </div>
+          )}
 
-            {/*
-              Main Content Area
-              Adjusts padding based on sidebar width
-            */}
-            <main
-              className={`
-                flex-1
-                overflow-y-auto
-                p-6
-                transition-all
-                duration-300
-                ${sidebarCollapsed ? 'ml-16' : 'ml-64'}
-              `}
-            >
-              <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/login" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/threats" element={<ProtectedRoute><ThreatAnalysis /></ProtectedRoute>} />
-                <Route path="/operations" element={<ProtectedRoute><Operations /></ProtectedRoute>} />
-                <Route path="/surveillance" element={<ProtectedRoute><Surveillance /></ProtectedRoute>} />
-                <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
-                <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-                <Route path="/personnel" element={<ProtectedRoute><Personnel /></ProtectedRoute>} />
-                <Route path="/systems" element={<ProtectedRoute><Systems /></ProtectedRoute>} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </main>
-          </div>
+          {activePage === 'operations' && (
+            <div className="flex items-center justify-center h-64 card">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-white mb-2">Operations Center</h2>
+                <p className="text-slate-400">Coming soon...</p>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
 
-          {/* Floating Vanguard AI Copilot */}
-          <VanguardAI
-            isOpen={isCopilotOpen}
-            onClose={() => setCopilotOpen(false)}
-          />
-        </div>
-      ) : (
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      )}
-    </BrowserRouter>
+      {/* Floating Vanguard AI Copilot */}
+      <VanguardAI
+        isOpen={isCopilotOpen}
+        onClose={() => setIsCopilotOpen(false)}
+      />
+    </div>
   );
 }
 

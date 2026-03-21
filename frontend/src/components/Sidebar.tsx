@@ -21,7 +21,6 @@
  */
 
 import React from 'react';
-import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   AlertTriangle,
@@ -44,6 +43,10 @@ import {
 interface SidebarProps {
   /** Whether sidebar is collapsed (icons only) */
   collapsed: boolean;
+  /** Currently active page */
+  activePage: string;
+  /** Navigation callback */
+  onNavigate: (page: string) => void;
   /** Toggle collapse callback */
   onToggle: () => void;
 }
@@ -96,6 +99,8 @@ const SYSTEM_STATUS: SystemStatus[] = [
 
 const Sidebar: React.FC<SidebarProps> = ({
   collapsed,
+  activePage,
+  onNavigate,
   onToggle,
 }) => {
   // ---------------------------------------------------------------------------
@@ -131,7 +136,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       className={`
         fixed left-0 top-16
         h-[calc(100vh-64px)]
-        bg-black
+        bg-slate-800
         border-r border-slate-700
         transition-all duration-300 ease-in-out
         z-40
@@ -152,38 +157,38 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation Items */}
         <nav className="space-y-1 px-2">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.id}
-              to={`/${item.id}`}
-              className={({ isActive }) => `
-                w-full flex items-center
-                ${collapsed ? 'justify-center px-2' : 'px-3'}
-                py-2.5 rounded-lg
-                text-sm font-medium
-                transition-all duration-200
-                ${isActive
-                  ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
-                  : 'text-slate-300 hover:bg-slate-700 hover:text-white'
-                }
-              `}
-              title={collapsed ? item.label : undefined}
-            >
-              {({ isActive }) => (
-                <>
-                  {/* Icon */}
-                  <span className={isActive ? 'text-white' : 'text-slate-400'}>
-                    {item.icon}
-                  </span>
+          {NAV_ITEMS.map((item) => {
+            const isActive = activePage === item.id;
 
-                  {/* Label (hidden when collapsed) */}
-                  {!collapsed && (
-                    <span className="ml-3">{item.label}</span>
-                  )}
-                </>
-              )}
-            </NavLink>
-          ))}
+            return (
+              <button
+                key={item.id}
+                onClick={() => onNavigate(item.id)}
+                className={`
+                  w-full flex items-center
+                  ${collapsed ? 'justify-center px-2' : 'px-3'}
+                  py-2.5 rounded-lg
+                  text-sm font-medium
+                  transition-all duration-200
+                  ${isActive
+                    ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
+                    : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                  }
+                `}
+                title={collapsed ? item.label : undefined}
+              >
+                {/* Icon */}
+                <span className={isActive ? 'text-white' : 'text-slate-400'}>
+                  {item.icon}
+                </span>
+
+                {/* Label (hidden when collapsed) */}
+                {!collapsed && (
+                  <span className="ml-3">{item.label}</span>
+                )}
+              </button>
+            );
+          })}
         </nav>
       </div>
 
