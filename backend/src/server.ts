@@ -51,7 +51,9 @@ import { startAlertSimulator } from './realtime/alertSimulator.js';
 
 const PORT = process.env.PORT || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
+const CORS_ORIGIN = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+    : ['http://localhost:5173', 'http://localhost:3000'];
 
 // =============================================================================
 // EXPRESS APP SETUP
@@ -81,8 +83,9 @@ app.use(helmet({
 // CORS configuration
 app.use(cors({
     origin: CORS_ORIGIN,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with'],
+    credentials: true,
 }));
 
 // Parse JSON bodies

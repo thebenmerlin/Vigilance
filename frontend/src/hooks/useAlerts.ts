@@ -32,7 +32,7 @@ interface UseAlertsReturn {
 export function useAlerts(options: UseAlertsOptions = {}): UseAlertsReturn {
     const {
         maxAlerts = 50,
-        backendUrl = 'http://localhost:3001'
+        backendUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
     } = options;
 
     const [alerts, setAlerts] = useState<Alert[]>([]);

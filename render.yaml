@@ -1,0 +1,43 @@
+services:
+  # Node.js API Service
+  - type: web
+    name: vigilance-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        # Multiple origins can be comma-separated, e.g. https://your-vercel-app.vercel.app,http://localhost:3000
+        sync: false
+      - key: ML_SERVICE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: NEO4J_URI
+        sync: false
+      - key: NEO4J_USER
+        sync: false
+      - key: NEO4J_PASSWORD
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+
+  # Python ML Service
+  - type: web
+    name: vigilance-ml-service
+    env: python
+    rootDir: ml
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: MODEL_CACHE_DIR
+        value: ./models
+      - key: CORS_ORIGIN
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
