@@ -113,6 +113,44 @@ npm run dev
 
 ---
 
+## ☁️ Cloud Deployment (Render & Vercel)
+
+The platform is fully configured for production deployment using **Render** (for the backend and ML services) and **Vercel** (for the frontend dashboard).
+
+### 1. Deploy Databases
+Before deploying the services, you must provision managed databases (e.g., Supabase/Neon for Postgres, AuraDB for Neo4j, Upstash/Render for Redis). Keep their connection URIs handy.
+
+### 2. Deploy Backend & ML Services (Render)
+The repository includes a `render.yaml` Blueprint which automatically configures both the Node.js API and the Python ML service.
+
+1. Create a [Render](https://render.com/) account and connect your GitHub repository.
+2. Click **New +** > **Blueprint**.
+3. Select this repository. Render will automatically detect the `vigilance-backend` and `vigilance-ml-service` from the `render.yaml` file.
+4. Fill in the required environment variables in the Render dashboard for the **Node.js Backend**:
+   - `CORS_ORIGIN`: Your soon-to-be Vercel frontend URL (e.g., `https://your-app.vercel.app`)
+   - `ML_SERVICE_URL`: The internal Render URL of your ML Service (e.g., `http://vigilance-ml-service:8000`)
+   - `DATABASE_URL`: Your production PostgreSQL URI
+   - `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`: Your AuraDB credentials
+   - `REDIS_URL`: Your Redis instance URI
+   - `JWT_SECRET`: A secure random string for authentication
+5. Fill in the required environment variables for the **Python ML Service**:
+   - `CORS_ORIGIN`: Your soon-to-be Vercel frontend URL (e.g., `https://your-app.vercel.app`)
+   - `OPENAI_API_KEY`: (Optional) If utilizing the external LLM copilot.
+
+### 3. Deploy Frontend (Vercel)
+The React dashboard is optimized for Vercel. SPA routing is automatically handled via the included `vercel.json`.
+
+1. Create a [Vercel](https://vercel.com/) account and select **Add New...** > **Project**.
+2. Import this repository.
+3. In the "Configure Project" step, update the following:
+   - **Framework Preset:** Vite
+   - **Root Directory:** `frontend`
+4. Add the following **Environment Variables**:
+   - `VITE_API_URL`: The public URL of your deployed Node.js backend on Render (e.g., `https://vigilance-backend.onrender.com/api`).
+5. Click **Deploy**.
+
+---
+
 ## 🔧 Configuration
 
 Environment variables map core service connections. Copy the example file in each directory:
