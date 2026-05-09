@@ -113,7 +113,7 @@ npm run dev
 
 ---
 
-## ☁️ Cloud Deployment (Render & Vercel)
+## ☁️ Cloud Deployment
 
 The platform is fully configured for production deployment using **Render** (for the backend and ML services) and **Vercel** (for the frontend dashboard).
 
